@@ -32,14 +32,13 @@ app = Flask(__name__)
 @app.route("/api/ai-decision", methods=['POST'])
 def get_ai_decision():
     # Dump the contents of the image into a new temp file
-    # TODO: See if we can read the raw image bytes with Image class
-    # TODO: Handle JPEG
-    with open("temp.png", 'wb') as out:
+    # TODO: Make more useful file name for pushing to DB
+    with open("temp", 'wb') as out:
         out.write(request.files.get("image").read())
         
     # Create a tensor from the image
     # TODO: See if we still want to resize in utils, or if this works
-    image = Image.open("temp.png").convert('RGB')
+    image = Image.open("temp").convert('RGB')
     image = image.resize((227, 227), Image.BILINEAR)
     img_tensor = [np.asarray(image, dtype=np.float32)]
     
