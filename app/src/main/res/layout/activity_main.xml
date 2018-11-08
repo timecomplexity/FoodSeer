@@ -9,7 +9,7 @@
     <LinearLayout
         android:id="@+id/linearLayout"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="799dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
@@ -20,7 +20,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,19 +29,19 @@
             android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/imageButton3"
+                android:id="@+id/buttonHelp"
                 android:layout_width="102dp"
                 android:layout_height="wrap_content"
                 app:srcCompat="@android:drawable/ic_menu_help" />
 
             <ImageButton
-                android:id="@+id/imageButton"
+                android:id="@+id/buttonCamera"
                 android:layout_width="135dp"
                 android:layout_height="wrap_content"
                 app:srcCompat="@android:drawable/ic_menu_camera" />
 
             <ImageButton
-                android:id="@+id/imageButton2"
+                android:id="@+id/buttonUpload"
                 android:layout_width="134dp"
                 android:layout_height="wrap_content"
                 app:srcCompat="@android:drawable/ic_menu_upload" />
@@ -49,16 +50,37 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="367dp">
+
+            <ImageView
+                android:id="@+id/imageMainResult"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?android:attr/accessibilityFocusedDrawable"
+                app:srcCompat="@color/colorPrimary" />
 
             <TextView
-                android:id="@+id/textView"
+                android:id="@+id/textNoneUploadedYet"
                 android:layout_width="wrap_content"
-                android:layout_height="333dp"
+                android:layout_height="match_parent"
                 android:gravity="center"
                 android:text="No image uploaded yet, click the camera or the upload button to get started!"
                 android:textSize="24sp" />
+
         </FrameLayout>
+
+        <SeekBar
+            android:id="@+id/seekbarMainResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false" />
+
+        <TextView
+            android:id="@+id/textMainResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="placeholder" />
 
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>
