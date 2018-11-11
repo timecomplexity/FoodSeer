@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 import com.blastbeatsandcode.seefood.R;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SFView {
 
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
@@ -108,7 +108,8 @@ public class MainActivity extends AppCompatActivity {
         buttonHelp.setOnClickListener(
             new View.OnClickListener() {
                 @Override public void onClick(View v) {
-                    //TODO
+                    // Call the Display Help method
+                    displayHelp();
                 }
             }
         );
@@ -118,7 +119,8 @@ public class MainActivity extends AppCompatActivity {
         buttonCamera.setOnClickListener(
                 new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        //TODO
+                        // Call the Take Picture Method
+                        takePicture();
                     }
                 }
         );
@@ -128,11 +130,36 @@ public class MainActivity extends AppCompatActivity {
         buttonUpload.setOnClickListener(
                 new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        //TODO
+                        // Call the Upload Image method
+                        uploadImage();
                     }
                 }
         );
     }
 
 
+    @Override
+    public void uploadImage() {
+        // TODO: Implement this!
+    }
+
+    @Override
+    public void viewGallery() {
+        // TODO: Implement this!
+    }
+
+    @Override
+    public void displayHelp() {
+        // TODO: Implement this!
+    }
+
+    @Override
+    public void takePicture() {
+        // TODO: Implement this!
+    }
+
+    @Override
+    public void update() {
+
+    }
 }
