@@ -31,19 +31,22 @@
 
                 <ImageButton
                     android:id="@+id/buttonHelp"
-                    android:layout_width="102dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     app:srcCompat="@android:drawable/ic_menu_help" />
 
                 <ImageButton
                     android:id="@+id/buttonCamera"
-                    android:layout_width="135dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     app:srcCompat="@android:drawable/ic_menu_camera" />
 
                 <ImageButton
                     android:id="@+id/buttonUpload"
-                    android:layout_width="134dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     app:srcCompat="@android:drawable/ic_menu_upload" />
 
