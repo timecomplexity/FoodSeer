@@ -113,9 +113,9 @@ public class ServerConn {
 
     /**
      * Batch upload images to the AI
-     * @param imagePaths The paths of each individual
-     * @param sender
-     * @return
+     * @param imagePaths The paths of each individual image
+     * @param sender The name of the sender (the same for each image)
+     * @return String array of each AI decision on each image
      */
     public String[] uploadImageBatch(String[] imagePaths, String sender) {
         // Hold on to our batch image responses
