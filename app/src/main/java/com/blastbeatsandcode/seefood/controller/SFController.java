@@ -55,7 +55,7 @@ public class SFController {
     // Return the images
     public Queue<SFImage> getImages() {
         // TODO: Update images
-        _images = _conn.getAllimages();
+        _images = _conn.getAllImages();
 
         return _images;
     }
