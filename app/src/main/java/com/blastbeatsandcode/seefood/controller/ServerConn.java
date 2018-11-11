@@ -75,6 +75,12 @@ public class ServerConn {
         return false;
     }
 
+    /**
+     * Upload single image for AI decision
+     * @param imagePath Path to the image, relative to root
+     * @param sender Sender name
+     * @return JSON String of conf/non-conf values
+     */
     public String uploadImage(String imagePath, String sender) {
         HttpPost request = new HttpPost(
                 "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/ai-decision");
@@ -105,6 +111,12 @@ public class ServerConn {
         }
     }
 
+    /**
+     * Batch upload images to the AI
+     * @param imagePaths The paths of each individual
+     * @param sender
+     * @return
+     */
     public String[] uploadImageBatch(String[] imagePaths, String sender) {
         // Hold on to our batch image responses
         String[] responses = new String[imagePaths.length];
@@ -116,32 +128,6 @@ public class ServerConn {
 
         // Return our responses
         return responses;
-    }
-}
-
-// This needs to be brought out into its own async class to maintain a constant connection
-class Connect extends AsyncTask {
-
-
-
-    /**
-     * Create the actual HTTP Client connection
-     * @param objects
-     * @return
-     */
-    @Override
-    protected Object doInBackground(Object[] objects) {
-        try {
-            // Create the HTTP Client connection
-            CloseableHttpClient hc = HttpClients.createDefault();
-            HttpPost request = new HttpPost("http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/ai-decision");
-
-            // Return true if our connection is successful
-            return true;
-        } catch (Exception ex) {
-            // False if connection fails
-            return false;
-        }
     }
 
 }
