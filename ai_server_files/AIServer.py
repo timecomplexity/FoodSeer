@@ -46,10 +46,7 @@ def get_ai_decision():
     scores = sess.run(class_scores, {x_input: img_tensor, keep_prob: 1.})
     
     # Return the result
-    if np.argmax(scores) == 1:
-        return "No food here... :( "
-    else:
-        return "Oh yes... I see food! :D"
+    return "{ food_conf : " +  str(scores[0][0]) + ", not_foot_conf : " + str(scores[0][1]) + "}"
     
 def _extract_food_confidence():
     pass
