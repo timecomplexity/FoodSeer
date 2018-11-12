@@ -1,9 +1,18 @@
 package com.blastbeatsandcode.seefood.controller;
 
 
+import android.media.Image;
+
 import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.view.SFView;
 
+import org.apache.hc.core5.http.io.entity.StringEntity;
+
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Queue;
 
@@ -58,6 +67,41 @@ public class SFController {
         _images = _conn.getAllImages();
 
         return _images;
+    }
+
+    /**
+     * Send image to AI for processing
+     * @param imagePath Path to image file
+     * @param sender Sender name
+     */
+    public void sendImageToAI(String imagePath, String sender) {
+        // Get the result of the AI processing
+        String result = _conn.uploadImage(imagePath, sender);
+
+        // Save data back to DB for later retrieval
+        String[] splitResult = result.split(",");
+        String fileName = splitResult[0];
+        String foodConf = splitResult[1];
+        String notFoodConf = splitResult[2];
+        String[] pathData = imagePath.split(".");
+        String imageType = pathData[pathData.length - 2];
+
+        try {
+            // Initialize the Driver class
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306", "root", "password");
+            Statement stmt = con.createStatement();
+            // Insert data into the table
+            ResultSet rs = stmt.executeQuery("INSERT INTO image_data.image_data (\'" + fileName +
+                "\',\'" + foodConf + "\',\'" + notFoodConf + "\',\'" + imageType + "\',\'" + sender + "\')\'");
+            while (rs.next()) {
+                System.out.println(rs.getInt(1));
+            }
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
 
