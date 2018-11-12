@@ -193,15 +193,16 @@ class DBSender extends AsyncTask {
     @Override
     protected Object doInBackground(Object[] objects) {
         try {
-            System.out.println("errors abound");
             // Initialize the Driver class
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("com.mysql.jdbc.Driver");
             Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306", "root", "password");
+                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306",
+                    "root", "password");
             Statement stmt = con.createStatement();
-            // Insert data into the table
-            stmt.executeQuery("INSERT INTO image_data.image_data (\'" + fileName +
-                    "\',\'" + foodConf + "\',\'" + notFoodConf + "\',\'" + imageType + "\',\'" + sender + "\')\'");
+            // Insert data into the table (this is disgusting!)
+            String sql = "INSERT INTO image_data.image_data VALUES (\'" + fileName +
+                    "\'," + foodConf + "," + notFoodConf + ",\'" + imageType + "\',\'" + sender + "\')";
+            stmt.executeUpdate(sql);
             con.close();
             return null;
         } catch (Exception e) {
