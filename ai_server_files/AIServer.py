@@ -8,6 +8,8 @@ from flask import Flask, request, jsonify
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+from datetime import datetime
+from os.path import isfile
 
 # The below block is from Dr. Derek Doran's find_food.py example
 ###### Initialization code - we only need to run this once and keep in memory.
@@ -31,22 +33,28 @@ app = Flask(__name__)
 #   find_food.py example
 @app.route("/api/ai-decision", methods=['POST'])
 def get_ai_decision():
-    # Dump the contents of the image into a new temp file
-    # TODO: Make more useful file name for pushing to DB
-    with open("temp", 'wb') as out:
+    # Generate a file name
+    file_name = "images/" + datetime.now().strftime("%Y%m%d%H%M%S")
+    image_number = 1
+    while isfile(file_name):
+        file_name += image_number
+        image_number += 1
+        
+    # Save off the file in our images database
+    with open(file_name, 'wb+') as out:
         out.write(request.files.get("image").read())
         
     # Create a tensor from the image
     # TODO: See if we still want to resize in utils, or if this works
-    image = Image.open("temp").convert('RGB')
+    image = Image.open(file_name).convert('RGB')
     image = image.resize((227, 227), Image.BILINEAR)
     img_tensor = [np.asarray(image, dtype=np.float32)]
     
     #Run the image in the model.
     scores = sess.run(class_scores, {x_input: img_tensor, keep_prob: 1.})
     
-    # Return the result
-    return "{ food_conf : " +  str(scores[0][0]) + ", not_foot_conf : " + str(scores[0][1]) + "}"
+    # Return the result   
+    return file_name + "," + str(scores[0][0]) + "," + str(scores[0][1])
     
 def _extract_food_confidence():
     pass
