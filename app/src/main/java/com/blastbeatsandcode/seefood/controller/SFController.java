@@ -78,7 +78,7 @@ public class SFController {
         // Get the result of the AI processing
         String result = _conn.uploadImage(imagePath, sender);
 
-        // Save data back to DB for later retrieval
+        // Get image data
         String[] splitResult = result.split(",");
         String fileName = splitResult[0];
         String foodConf = splitResult[1];
@@ -86,22 +86,8 @@ public class SFController {
         String[] pathData = imagePath.split(".");
         String imageType = pathData[pathData.length - 2];
 
-        try {
-            // Initialize the Driver class
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306", "root", "password");
-            Statement stmt = con.createStatement();
-            // Insert data into the table
-            ResultSet rs = stmt.executeQuery("INSERT INTO image_data.image_data (\'" + fileName +
-                "\',\'" + foodConf + "\',\'" + notFoodConf + "\',\'" + imageType + "\',\'" + sender + "\')\'");
-            while (rs.next()) {
-                System.out.println(rs.getInt(1));
-            }
-            con.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        // Save data to DB for later retrieval
+        _conn.uploadToDB(fileName, foodConf, notFoodConf, imageType, sender);
     }
 
 

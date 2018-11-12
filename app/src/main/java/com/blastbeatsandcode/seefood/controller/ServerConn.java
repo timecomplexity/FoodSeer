@@ -8,6 +8,10 @@ import com.blastbeatsandcode.seefood.model.SFImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -19,6 +23,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 /*
  * The ServerConn class handles the connection between the SeeFood app
@@ -128,6 +133,30 @@ public class ServerConn {
 
         // Return our responses
         return responses;
+    }
+
+    public void uploadToDB(String fileName, String foodConf, String notFoodConf, String imageType,
+                           String sender) {
+        try {
+            // Initialize the Driver class
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306", "root", "password");
+            Statement stmt = con.createStatement();
+            // Insert data into the table
+            ResultSet rs = stmt.executeQuery("INSERT INTO image_data.image_data (\'" + fileName +
+                    "\',\'" + foodConf + "\',\'" + notFoodConf + "\',\'" + imageType + "\',\'" + sender + "\')\'");
+            while (rs.next()) {
+                System.out.println(rs.getInt(1));
+            }
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public void retrieveFromDB(SFImage sfi) {
+        //pass
     }
 
 }
