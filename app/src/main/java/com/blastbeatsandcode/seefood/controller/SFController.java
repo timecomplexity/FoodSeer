@@ -32,7 +32,7 @@ public class SFController {
     private Queue<SFImage> _images;
 
     // Connection to the server object
-    private ServerConn _conn;
+    private ServerConn _conn = new ServerConn();
 
     // Instance of the SFController
     private static SFController instance = null;
@@ -73,8 +73,9 @@ public class SFController {
      * Send image to AI for processing
      * @param imagePath Path to image file
      * @param sender Sender name
+     * @return Result of AI processing
      */
-    public void sendImageToAI(String imagePath, String sender) {
+    public String sendImageToAI(String imagePath, String sender) {
         // Get the result of the AI processing
         String result = _conn.uploadImage(imagePath, sender);
 
@@ -83,11 +84,13 @@ public class SFController {
         String fileName = splitResult[0];
         String foodConf = splitResult[1];
         String notFoodConf = splitResult[2];
-        String[] pathData = imagePath.split(".");
-        String imageType = pathData[pathData.length - 2];
+        String[] pathData = imagePath.split("\\.");
+        String imageType = pathData[pathData.length - 1];
 
         // Save data to DB for later retrieval
         _conn.uploadToDB(fileName, foodConf, notFoodConf, imageType, sender);
+
+        return result;
     }
 
 
