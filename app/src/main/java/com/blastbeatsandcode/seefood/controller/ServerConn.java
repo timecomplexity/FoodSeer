@@ -121,22 +121,8 @@ public class ServerConn {
 
     public void uploadToDB(String fileName, String foodConf, String notFoodConf, String imageType,
                            String sender) {
-        try {
-            // Initialize the Driver class
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection con = DriverManager.getConnection(
-                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306", "root", "password");
-            Statement stmt = con.createStatement();
-            // Insert data into the table
-            ResultSet rs = stmt.executeQuery("INSERT INTO image_data.image_data (\'" + fileName +
-                    "\',\'" + foodConf + "\',\'" + notFoodConf + "\',\'" + imageType + "\',\'" + sender + "\')\'");
-            while (rs.next()) {
-                System.out.println(rs.getInt(1));
-            }
-            con.close();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
+        DBSender s = new DBSender(fileName, foodConf, notFoodConf, imageType, sender);
+        s.execute();
     }
 
     public void retrieveFromDB(SFImage sfi) {
@@ -183,6 +169,43 @@ class Sender extends AsyncTask {
             return null;
         } catch (IOException | ParseException e) {
             // If we're here, everything is broken
+            return null;
+        }
+    }
+}
+
+class DBSender extends AsyncTask {
+
+    private String fileName;
+    private String foodConf;
+    private String notFoodConf;
+    private String imageType;
+    private String sender;
+
+    DBSender (String fileName, String foodConf, String notFoodConf, String imageType, String sender) {
+        this.fileName = fileName;
+        this.foodConf = foodConf;
+        this.notFoodConf = notFoodConf;
+        this.imageType = imageType;
+        this.sender = sender;
+    }
+
+    @Override
+    protected Object doInBackground(Object[] objects) {
+        try {
+            System.out.println("errors abound");
+            // Initialize the Driver class
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306", "root", "password");
+            Statement stmt = con.createStatement();
+            // Insert data into the table
+            stmt.executeQuery("INSERT INTO image_data.image_data (\'" + fileName +
+                    "\',\'" + foodConf + "\',\'" + notFoodConf + "\',\'" + imageType + "\',\'" + sender + "\')\'");
+            con.close();
+            return null;
+        } catch (Exception e) {
+            System.out.println(e);
             return null;
         }
     }
