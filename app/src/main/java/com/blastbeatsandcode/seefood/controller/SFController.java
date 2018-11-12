@@ -1,9 +1,18 @@
 package com.blastbeatsandcode.seefood.controller;
 
 
+import android.media.Image;
+
 import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.view.SFView;
 
+import org.apache.hc.core5.http.io.entity.StringEntity;
+
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Queue;
 
@@ -55,9 +64,30 @@ public class SFController {
     // Return the images
     public Queue<SFImage> getImages() {
         // TODO: Update images
-        _images = _conn.getAllimages();
+        _images = _conn.getAllImages();
 
         return _images;
+    }
+
+    /**
+     * Send image to AI for processing
+     * @param imagePath Path to image file
+     * @param sender Sender name
+     */
+    public void sendImageToAI(String imagePath, String sender) {
+        // Get the result of the AI processing
+        String result = _conn.uploadImage(imagePath, sender);
+
+        // Get image data
+        String[] splitResult = result.split(",");
+        String fileName = splitResult[0];
+        String foodConf = splitResult[1];
+        String notFoodConf = splitResult[2];
+        String[] pathData = imagePath.split(".");
+        String imageType = pathData[pathData.length - 2];
+
+        // Save data to DB for later retrieval
+        _conn.uploadToDB(fileName, foodConf, notFoodConf, imageType, sender);
     }
 
 
