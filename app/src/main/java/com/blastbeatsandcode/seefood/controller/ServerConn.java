@@ -15,6 +15,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
@@ -87,33 +88,16 @@ public class ServerConn {
      * @return JSON String of conf/non-conf values
      */
     public String uploadImage(String imagePath, String sender) {
-        HttpPost request = new HttpPost(
-                "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/ai-decision");
-
-        // Create an entity to send over POST
-        MultipartEntityBuilder entity = MultipartEntityBuilder.create();
-        entity.setCharset(Charset.defaultCharset());
-
-        // Add our image, path relative to root
-        File rootPath = Environment.getExternalStorageDirectory();
-        entity.addBinaryBody("image", new File(rootPath + imagePath));
-
-        // Add the name of the sender
-        entity.addTextBody("sender", sender);
-
-        // Set up the above entity to send
-        request.setEntity(entity.build());
-
+        Sender s = new Sender(imagePath, sender);
+        s.execute();
         try {
-            // Send off to server
-            CloseableHttpResponse response = _client.execute(request);
-
-            // Give back the server response (confidence levels)
-            return EntityUtils.toString(response.getEntity());
-        } catch (IOException | ParseException e) {
-            // If we're here, everything is broken
-            return null;
+            s.get();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        return s.result;
     }
 
     /**
@@ -159,4 +143,47 @@ public class ServerConn {
         //pass
     }
 
+}
+
+class Sender extends AsyncTask {
+    private final String filePath;
+    private final String sender;
+    public String result;
+
+    Sender(String filePath, String sender) {
+        this.filePath = filePath;
+        this.sender = sender;
+    }
+
+    @Override
+    protected Object doInBackground(Object[] objects) {
+        HttpPost request = new HttpPost(
+                "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/ai-decision");
+
+        // Create an entity to send over POST
+        MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+        entity.setCharset(Charset.defaultCharset());
+
+        // Add our image, path relative to root
+        File rootPath = Environment.getExternalStorageDirectory();
+        entity.addBinaryBody("image", new File(rootPath + filePath));
+
+        // Add the name of the sender
+        entity.addTextBody("sender", sender);
+
+        // Set up the above entity to send
+        request.setEntity(entity.build());
+
+        try {
+            // Send off to server
+            CloseableHttpResponse response = HttpClients.createDefault().execute(request);
+
+            // Give back the server response (confidence levels)
+            result =  EntityUtils.toString(response.getEntity());
+            return null;
+        } catch (IOException | ParseException e) {
+            // If we're here, everything is broken
+            return null;
+        }
+    }
 }
