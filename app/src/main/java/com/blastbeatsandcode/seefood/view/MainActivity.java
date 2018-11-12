@@ -12,8 +12,10 @@ import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.R;
+import com.blastbeatsandcode.seefood.controller.SFController;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
@@ -60,6 +62,15 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // images so populating the gallery is easier :)
         populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
+
+        /////////////////////////////////////////
+        // TEST CODE -- REMOVE FROM PRODUCTION //
+        /////////////////////////////////////////
+        SFController c = SFController.getInstance();
+        String r = c.sendImageToAI("/DCIM/Drawings/09082018161409.png", "adam_test");
+        Toast toast = Toast.makeText(getApplicationContext(), r, Toast.LENGTH_SHORT);
+        toast.show();
+        // END TEST CODE //
 
     }
 
