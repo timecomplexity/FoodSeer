@@ -34,7 +34,7 @@ app = Flask(__name__)
 @app.route("/api/ai-decision", methods=['POST'])
 def get_ai_decision():
     # Generate a file name
-    file_name = "images/" + datetime.now().strftime("%Y%m%d%H%M%S")
+    file_name = "/home/ubuntu/seefood/images/" + datetime.now().strftime("%Y%m%d%H%M%S")
     image_number = 1
     while isfile(file_name):
         file_name += image_number
