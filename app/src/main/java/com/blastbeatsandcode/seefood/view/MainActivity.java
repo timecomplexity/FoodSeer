@@ -1,7 +1,16 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.Image;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -17,14 +26,20 @@ import android.widget.Toast;
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
 public class MainActivity extends AppCompatActivity implements SFView {
 
+    public static final int REQUEST_CODE_FOR_IMAGE_SELECTION = 0;
+    public static final int REQUEST_CODE_FOR_CAMERA = 1;
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
     private static ImageButton buttonCamera;
     private static ImageButton buttonUpload;
     private static ImageView imageMainResult;
-    private static TextView textNoneUploadedYet;
+    private static TextView textMainImageCoverup;
     private static SeekBar seekbarMainResult;
     private static TextView textMainResult;
     private static TableLayout tableGallery;
@@ -40,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         buttonCamera = (ImageButton)findViewById(R.id.buttonCamera);
         buttonUpload = (ImageButton)findViewById(R.id.buttonUpload);
         imageMainResult = (ImageView)findViewById(R.id.imageMainResult);
-        textNoneUploadedYet = (TextView)findViewById(R.id.textNoneUploadedYet);
+        textMainImageCoverup = (TextView)findViewById(R.id.textMainImageCoverup);
         seekbarMainResult = (SeekBar)findViewById(R.id.seekbarMainResult);
         seekbarMainResult.setEnabled(false); // make the seekbar frozen
         textMainResult = (TextView)findViewById(R.id.textMainResult);
@@ -63,13 +78,14 @@ public class MainActivity extends AppCompatActivity implements SFView {
         populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
+        //TODO: remove this
         /////////////////////////////////////////
         // TEST CODE -- REMOVE FROM PRODUCTION //
         /////////////////////////////////////////
-        SFController c = SFController.getInstance();
-        String r = c.sendImageToAI("/DCIM/Drawings/09082018161409.png", "adam_test");
-        Toast toast = Toast.makeText(getApplicationContext(), r, Toast.LENGTH_SHORT);
-        toast.show();
+        //SFController c = SFController.getInstance();
+        //String r = c.sendImageToAI("/DCIM/Drawings/09082018161409.png", "adam_test");
+        //Toast toast = Toast.makeText(getApplicationContext(), r, Toast.LENGTH_SHORT);
+        //toast.show();
         // END TEST CODE //
 
     }
@@ -93,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
             tableGallery.addView(row);
             // TODO populate more based on object's attributes
         }
+        // TODO add a button to view more
 
     }
 
@@ -148,25 +165,82 @@ public class MainActivity extends AppCompatActivity implements SFView {
         );
     }
 
+    @Override
+    public void displayHelp() {
+        Toast.makeText(this, "got here", Toast.LENGTH_LONG).show();
+
+        String helpText = "This app is quite simple. To start, first tap either"+
+        " the camera or the upload button.\nNext, take a picture or select a picture to upload. Your"+
+        " image will be processed by an AI and tested for how likely it is to be food! When the processing"+
+        " is finished, your latest image will appear and show how \"food\" it is! To see previously uploaded "+
+        " images, just scroll down.\n\nHappy SeeFooding!";
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setCancelable(true); //allow user to close popup
+        builder.setTitle("Welcome to SeeFood!");
+        builder.setMessage(helpText);
+        builder.setNegativeButton("Great!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+            }
+        });
+        builder.show();
+    }
 
     @Override
     public void uploadImage() {
-        // TODO: Implement this!
+        // invoke image gallery with implicit intent
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        // specify where to find image
+        File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        String pictureDirectoryPath = pictureDirectory.getPath();
+        Uri data = Uri.parse(pictureDirectoryPath);
+        photoPickerIntent.setDataAndType(data, "image/*"); // accepts all image types
+        startActivityForResult(photoPickerIntent, REQUEST_CODE_FOR_IMAGE_SELECTION);
+
     }
 
     @Override
     public void viewGallery() {
-        // TODO: Implement this!
-    }
 
-    @Override
-    public void displayHelp() {
-        // TODO: Implement this!
     }
 
     @Override
     public void takePicture() {
-        // TODO: Implement this!
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, REQUEST_CODE_FOR_CAMERA);
+    }
+
+    @Override //called after takePicture() method and after uploadImage()
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (resultCode == RESULT_OK){
+            if (requestCode == REQUEST_CODE_FOR_IMAGE_SELECTION){ // user is trying to upload image
+                Uri imageUri = data.getData(); // the address of the image
+                InputStream inputStream; //declare stream to read image data
+                try { // exception could be that image is missing after selection
+                    inputStream = getContentResolver().openInputStream(imageUri);
+                    Bitmap image = BitmapFactory.decodeStream(inputStream);
+                    processImage(image);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Unable to open image from internal storage", Toast.LENGTH_LONG).show();
+                }
+            } else if (requestCode == REQUEST_CODE_FOR_CAMERA){
+                try {
+                    Bitmap image = (Bitmap)data.getExtras().get("data");
+                    processImage(image);
+                } catch (Exception e) { // bad code
+                    e.printStackTrace();
+                    Toast.makeText(this, "Unable to process photo that was taken", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+        //super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    public void processImage(Bitmap image){
+        imageMainResult.setImageBitmap(image); //set image as main image
+        //TODO: replace above line to send picture to db
     }
 
     @Override

@@ -77,7 +77,10 @@ public class SFController {
      */
     public String sendImageToAI(String imagePath, String sender) {
         // Get the result of the AI processing
-        String result = _conn.uploadImage(imagePath, sender);
+
+        //String result = _conn.uploadImage(imagePath, sender);
+        String result = "testname,testconf,testnotconf";
+        //TODO: remove above test case and uncomment code. (Had to do this because it throws an error for me)
 
         // Get image data
         String[] splitResult = result.split(",");
