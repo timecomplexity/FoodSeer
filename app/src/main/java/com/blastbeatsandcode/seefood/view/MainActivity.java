@@ -1,5 +1,6 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -29,6 +30,9 @@ import com.blastbeatsandcode.seefood.controller.SFController;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
@@ -70,12 +74,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // initialize
 
         initialize();
-        Image[] gallery = new Image[10];
+        //Image[] gallery = new Image[10];
         //TODO have this ^ come from somehwere else and be filled with
         // the latest x (10) images excluding the most recent one
         // also these might want to be an seeFoodImage objects which have data about foodness rather than just
         // images so populating the gallery is easier :)
-        populateGallery(gallery);
+        //populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
         //TODO: remove this
@@ -100,14 +104,16 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // populate the gallery
     }
 
-    private void populateGallery(Image[] gallery) {
-        for (Image i: gallery){ //for each image in gallery array
+    private void populateGallery(ArrayList<Bitmap> gallery) {
+        int count = 0;
+        for (Bitmap i: gallery){ //for each image in gallery array
             TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
-            ((ImageView)row.findViewById(R.id.galleryImage)).setImageResource(R.drawable.defaultimage);
+            ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(gallery.get(count));
             ((TextView)row.findViewById(R.id.galleryText)).setText("test");
             ((SeekBar)row.findViewById(R.id.gallerySeekbar)).setEnabled(false);
             tableGallery.addView(row);
             // TODO populate more based on object's attributes
+            count++;
         }
         // TODO add a button to view more
 
@@ -167,8 +173,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void displayHelp() {
-        Toast.makeText(this, "got here", Toast.LENGTH_LONG).show();
-
         String helpText = "This app is quite simple. To start, first tap either"+
         " the camera or the upload button.\nNext, take a picture or select a picture to upload. Your"+
         " image will be processed by an AI and tested for how likely it is to be food! When the processing"+
@@ -196,8 +200,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         String pictureDirectoryPath = pictureDirectory.getPath();
         Uri data = Uri.parse(pictureDirectoryPath);
         photoPickerIntent.setDataAndType(data, "image/*"); // accepts all image types
+        photoPickerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true); // allow selection of multiple items
         startActivityForResult(photoPickerIntent, REQUEST_CODE_FOR_IMAGE_SELECTION);
-
     }
 
     @Override
@@ -214,21 +218,39 @@ public class MainActivity extends AppCompatActivity implements SFView {
     @Override //called after takePicture() method and after uploadImage()
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (resultCode == RESULT_OK){
+            ArrayList<Bitmap> images = new ArrayList<Bitmap>();
             if (requestCode == REQUEST_CODE_FOR_IMAGE_SELECTION){ // user is trying to upload image
-                Uri imageUri = data.getData(); // the address of the image
+
+
+//                Uri imageUri = data.getData(); // the address of the image
+//                InputStream inputStream; //declare stream to read image data
+//                try { // exception could be that image is missing after selection
+//                    inputStream = getContentResolver().openInputStream(imageUri);
+//                    images.add(BitmapFactory.decodeStream(inputStream));
+//                    processImages(images);
+//                } catch (FileNotFoundException e) {
+//                    e.printStackTrace();
+//                    Toast.makeText(this, "Unable to open image from internal storage", Toast.LENGTH_LONG).show();
+
+
+                int count = data.getClipData().getItemCount();
+                Uri imageUri = data.getData();
                 InputStream inputStream; //declare stream to read image data
-                try { // exception could be that image is missing after selection
-                    inputStream = getContentResolver().openInputStream(imageUri);
-                    Bitmap image = BitmapFactory.decodeStream(inputStream);
-                    processImage(image);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, "Unable to open image from internal storage", Toast.LENGTH_LONG).show();
+                for(int i = 0; i < count; i++) {
+                    imageUri = data.getClipData().getItemAt(i).getUri();
+                    try { // exception could be that image is missing after selection
+                        inputStream = getContentResolver().openInputStream(imageUri);
+                        images.add(BitmapFactory.decodeStream(inputStream));
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, "Unable to open image from internal storage", Toast.LENGTH_LONG).show();
+                    }
                 }
+                processImages(images);
             } else if (requestCode == REQUEST_CODE_FOR_CAMERA){
                 try {
-                    Bitmap image = (Bitmap)data.getExtras().get("data");
-                    processImage(image);
+                    images.add((Bitmap)data.getExtras().get("data"));
+                    processImages(images);
                 } catch (Exception e) { // bad code
                     e.printStackTrace();
                     Toast.makeText(this, "Unable to process photo that was taken", Toast.LENGTH_LONG).show();
@@ -238,9 +260,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
         //super.onActivityResult(requestCode, resultCode, data);
     }
 
-    public void processImage(Bitmap image){
-        imageMainResult.setImageBitmap(image); //set image as main image
-        //TODO: replace above line to send picture to db
+    public void processImages(ArrayList<Bitmap> images){
+        textMainImageCoverup.setText("Processing...");
+        imageMainResult.setImageBitmap(images.get(images.size()-1)); //set last image as main image
+        //TODO: replace above line to send pictures to db
+        textMainImageCoverup.setText(""); // get rid of status message when picture is finished processing
+        textMainImageCoverup.setText(Integer.toString(images.size()));
+        populateGallery(images);
     }
 
     @Override
