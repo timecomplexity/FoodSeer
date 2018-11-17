@@ -26,10 +26,11 @@ import com.vansuita.pickimage.bean.PickResult;
 import com.vansuita.pickimage.bundle.PickSetup;
 import com.vansuita.pickimage.dialog.PickImageDialog;
 import com.vansuita.pickimage.enums.EPickType;
+import com.vansuita.pickimage.listeners.IPickResult;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements SFView {
+public class MainActivity extends AppCompatActivity implements SFView, IPickResult {
 
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
