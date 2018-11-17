@@ -6,6 +6,7 @@ import android.media.Image;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -21,6 +22,10 @@ import com.blastbeatsandcode.seefood.controller.SFController;
 import com.blastbeatsandcode.seefood.utils.Messages;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
+import com.vansuita.pickimage.bean.PickResult;
+import com.vansuita.pickimage.bundle.PickSetup;
+import com.vansuita.pickimage.dialog.PickImageDialog;
+import com.vansuita.pickimage.enums.EPickType;
 
 import java.util.ArrayList;
 
@@ -170,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
             //The array list has the image paths of the selected images
             ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
             for (Object image : images) {
+                // Send each image to the AI
                 String path = ((com.darsh.multipleimageselect.models.Image) image).path;
                 path = path.replace("/storage/emulated/0", "");
                 SFController c = SFController.getInstance();
@@ -192,6 +198,32 @@ public class MainActivity extends AppCompatActivity implements SFView {
     @Override
     public void takePicture() {
         // TODO: Implement this!
+
+        // Customize the picker for uploading from the camera
+        // TODO: Make this perfect
+        PickSetup setup = new PickSetup()
+                .setFlip(true)
+                .setMaxSize(500)
+                .setIconGravity(Gravity.LEFT)
+                .setSystemDialog(false)
+                .setPickTypes(EPickType.CAMERA);
+
+
+        // Show the dialog
+        PickImageDialog.build(setup).show(this);
+    }
+
+    @Override
+    public void onPickResult(PickResult pickResult) {
+        String path = pickResult.getPath();
+
+        // Removes the extra bit of the path including /storage/emulated/0
+        path = path.substring(19, path.length());
+        System.out.println("THE PATH IS: " + path);
+
+        SFController c = SFController.getInstance();
+        String r = c.sendImageToAI(path, "adam_test");
+        Messages.MakeToast(getApplicationContext(), r);
     }
 
     @Override
