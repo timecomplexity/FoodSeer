@@ -1,7 +1,9 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.Image;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -16,6 +18,11 @@ import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
+import com.blastbeatsandcode.seefood.utils.Messages;
+import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
+import com.darsh.multipleimageselect.helpers.Constants;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
@@ -151,7 +158,25 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void uploadImage() {
-        // TODO: Implement this!
+        Intent intent = new Intent(this, AlbumSelectActivity.class);
+        //set limit on number of images that can be selected, default is 10
+        //intent.putExtra(Constants.INTENT_EXTRA_LIMIT, numberOfImagesToSelect);
+        startActivityForResult(intent, Constants.REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            //The array list has the image paths of the selected images
+            ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
+            for (Object image : images) {
+                String path = ((com.darsh.multipleimageselect.models.Image) image).path;
+                path = path.replace("/storage/emulated/0", "");
+                SFController c = SFController.getInstance();
+                String r = c.sendImageToAI(path, "alex_test");
+                Messages.MakeToast(getApplicationContext(), r);
+            }
+        }
     }
 
     @Override
