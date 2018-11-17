@@ -92,6 +92,10 @@ public class SFController {
 
         return result;
     }
+//
+//    public SFImage getImageFromServer() {
+//        return new SFImage(new Image());
+//    }
 
 
     /*

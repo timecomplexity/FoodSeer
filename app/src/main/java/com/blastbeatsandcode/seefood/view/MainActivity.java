@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
+import com.blastbeatsandcode.seefood.controller.ServerConn;
 import com.blastbeatsandcode.seefood.utils.Messages;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
@@ -76,14 +77,10 @@ public class MainActivity extends AppCompatActivity implements SFView, IPickResu
         populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
-        /////////////////////////////////////////
-        // TEST CODE -- REMOVE FROM PRODUCTION //
-        /////////////////////////////////////////
-        SFController c = SFController.getInstance();
-        String r = c.sendImageToAI("/DCIM/Drawings/09082018161409.png", "adam_test");
-        Toast toast = Toast.makeText(getApplicationContext(), r, Toast.LENGTH_SHORT);
-        toast.show();
-        // END TEST CODE //
+        ServerConn sc = new ServerConn();
+        System.out.println("before");
+        sc.retrieveFromDB();
+        System.out.println("after");
 
     }
 
