@@ -35,6 +35,9 @@ public class SFController {
     // Instance of the SFController
     private static SFController instance = null;
 
+    // Hold the last item currently in the DB
+    private int _lastItem = -1;
+
     // TODO: Do we need this???
     // Hold a reference to the SFModel
     //private SFModel _m;
@@ -48,6 +51,7 @@ public class SFController {
     {
         _views = new ArrayList<SFView>();
         _selectedImages = new ArrayList<File>();
+        _lastItem = _conn.retrieveLastDBItemId();
     }
 
     // Only create a new instance of the SF controller if it does not already exist.
@@ -66,6 +70,19 @@ public class SFController {
         _imagesFromServer = _conn.getAllImages();
 
         return _imagesFromServer;
+    }
+
+    public String getImages(String s) {
+        int currentTarget = _lastItem;
+        String result = "";
+        for (int i = currentTarget; i > 10 && currentTarget > 10; i--) {
+            // Consume one item from our current target list
+            currentTarget--;
+            // Retrieve image data from the DB
+            result += _conn.getImageData(currentTarget) + "\n";
+        }
+
+        return result;
     }
 
     /*

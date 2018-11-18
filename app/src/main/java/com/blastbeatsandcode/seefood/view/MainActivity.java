@@ -5,11 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -18,7 +16,6 @@ import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
@@ -30,7 +27,6 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 // Image Pick library used for camera: https://github.com/jrvansuita/PickImage
@@ -85,11 +81,15 @@ public class MainActivity extends AppCompatActivity implements SFView {
         try {
             ServerConn sc = new ServerConn();
             System.out.println("before");
-            sc.retrieveFromDB();
+            sc.retrieveLastDBItemId();
             System.out.println("after");
         } catch (Exception e) {
             Messages.makeToast(getApplicationContext(), "Server is not running!");
         }
+
+        SFController c = SFController.getInstance();
+        Messages.makeToast(this, c.getImages("s"));
+
 
     }
 

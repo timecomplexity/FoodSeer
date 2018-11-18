@@ -50,6 +50,18 @@ public class ServerConn {
         return images;
     }
 
+    public String getImageData(int currentTarget) {
+        DBGetter g = new DBGetter(false, currentTarget);
+        g.execute();
+        try {
+            g.get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return g.getResult();
+    }
+
     /*
      * Send a request from passed in string
      * // TODO: Should we remove this as it is a security problem?
@@ -127,7 +139,7 @@ public class ServerConn {
         s.execute();
     }
 
-    public void retrieveFromDB() {
+    public int retrieveLastDBItemId() {
         DBGetter g = new DBGetter(true);
         g.execute();
         try {
@@ -137,7 +149,9 @@ public class ServerConn {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(g.getCurrentLast());
+        currentLast = g.getCurrentLast();
+        System.out.println(currentLast);
+        return currentLast;
     }
 
 }
@@ -230,7 +244,6 @@ class DBGetter extends AsyncTask {
     private boolean forLast;
     private int idToSearch;
     private int currentLast;
-    public String out = "";
 
     DBGetter(boolean forLast) {
         this.forLast = forLast;
@@ -270,7 +283,7 @@ class DBGetter extends AsyncTask {
             } else {
                 // Get all the data out of the DB query otherwise
                 while (rs.next()) {
-                    for (int i = 1; i < columnsNumber; i++)
+                    for (int i = 1; i < columnsNumber + 1; i++)
                         result += rs.getString(i) + " ";
                     result += "\n";
                 }
@@ -287,5 +300,9 @@ class DBGetter extends AsyncTask {
 
     public int getCurrentLast() {
         return currentLast;
+    }
+
+    public String getResult() {
+        return result;
     }
 }
