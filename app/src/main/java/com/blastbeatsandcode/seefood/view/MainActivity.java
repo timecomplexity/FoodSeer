@@ -1,9 +1,12 @@
 package com.blastbeatsandcode.seefood.view;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.Image;
+import android.net.Uri;
 import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -20,18 +23,19 @@ import android.widget.Toast;
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
 import com.blastbeatsandcode.seefood.controller.ServerConn;
+import com.blastbeatsandcode.seefood.utils.FileUtils;
 import com.blastbeatsandcode.seefood.utils.Messages;
+import com.blastbeatsandcode.seefood.utils.SFConstants;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
-import com.vansuita.pickimage.bean.PickResult;
-import com.vansuita.pickimage.bundle.PickSetup;
-import com.vansuita.pickimage.dialog.PickImageDialog;
-import com.vansuita.pickimage.enums.EPickType;
-import com.vansuita.pickimage.listeners.IPickResult;
 
+import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements SFView, IPickResult {
+// Image Pick library used for camera: https://github.com/jrvansuita/PickImage
+
+public class MainActivity extends AppCompatActivity implements SFView {
 
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
@@ -70,17 +74,22 @@ public class MainActivity extends AppCompatActivity implements SFView, IPickResu
 
         initialize();
         Image[] gallery = new Image[10];
-        //TODO have this ^ come from somehwere else and be filled with
+        //TODO have this ^ come from somewhere else and be filled with
         // the latest x (10) images excluding the most recent one
         // also these might want to be an seeFoodImage objects which have data about foodness rather than just
         // images so populating the gallery is easier :)
         populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
-        ServerConn sc = new ServerConn();
-        System.out.println("before");
-        sc.retrieveFromDB();
-        System.out.println("after");
+        // TODO: Update this so it doesn't crash the app when the server isn't running
+        try {
+            ServerConn sc = new ServerConn();
+            System.out.println("before");
+            sc.retrieveFromDB();
+            System.out.println("after");
+        } catch (Exception e) {
+            Messages.makeToast(getApplicationContext(), "Server is not running!");
+        }
 
     }
 
@@ -169,17 +178,44 @@ public class MainActivity extends AppCompatActivity implements SFView, IPickResu
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Handle what to do after images have been selected from the gallery
         if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             //The array list has the image paths of the selected images
             ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
             for (Object image : images) {
                 // Send each image to the AI
                 String path = ((com.darsh.multipleimageselect.models.Image) image).path;
-                path = path.replace("/storage/emulated/0", "");
-                SFController c = SFController.getInstance();
-                String r = c.sendImageToAI(path, "alex_test");
-                Messages.MakeToast(getApplicationContext(), r);
+                File imageFile = new File(path);
+                //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
+                SFController.getInstance().addImageToUpload(imageFile);
+
+
+                /* UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
+
+                String r = SFController.getInstance().sendImageToAI(path, "alex_test");
+                Messages.makeToast(getApplicationContext(), r);
+
+                */
             }
+
+            Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
+        } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
+            Bitmap image = (Bitmap) data.getExtras().get("data");
+            // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+            Uri tempUri = FileUtils.getImageUri(getApplicationContext(), image);
+
+            // CALL THIS METHOD TO GET THE ACTUAL PATH
+            File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
+            SFController.getInstance().addImageToUpload(imageFile);
+            Messages.makeToast(getApplicationContext(), "Number of images in list: " + SFController.getInstance().getImagesToUpload().size());
+
+            // Send the image to the AI with the absolute path
+            String absPath = imageFile.getAbsolutePath();
+            System.out.println("ABSOLUTE PATH: " + absPath);
+            String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
+            Messages.makeToast(getApplicationContext(), r);
+            //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
+            //Messages.makeToast(getApplicationContext(), r);
         }
     }
 
@@ -195,37 +231,14 @@ public class MainActivity extends AppCompatActivity implements SFView, IPickResu
 
     @Override
     public void takePicture() {
-        // TODO: Implement this!
-
-        // Customize the picker for uploading from the camera
-        // TODO: Make this perfect
-        PickSetup setup = new PickSetup()
-                .setFlip(true)
-                .setMaxSize(500)
-                .setIconGravity(Gravity.LEFT)
-                .setSystemDialog(false)
-                .setPickTypes(EPickType.CAMERA);
-
-
-        // Show the dialog
-        PickImageDialog.build(setup).show(this);
+        // Start the activity for taking a picture
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, SFConstants.TAKE_PICTURE_REQUEST_CODE);
     }
 
-    @Override
-    public void onPickResult(PickResult pickResult) {
-        String path = pickResult.getPath();
-
-        // Removes the extra bit of the path including /storage/emulated/0
-        path = path.substring(19, path.length());
-        System.out.println("THE PATH IS: " + path);
-
-        SFController c = SFController.getInstance();
-        String r = c.sendImageToAI(path, "adam_test");
-        Messages.MakeToast(getApplicationContext(), r);
-    }
 
     @Override
     public void update() {
-
+        // TODO: UPDATE THE VIEW
     }
 }
