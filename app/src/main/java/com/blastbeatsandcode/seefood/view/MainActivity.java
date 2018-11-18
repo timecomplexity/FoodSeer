@@ -190,12 +190,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 SFController.getInstance().addImageToUpload(imageFile);
 
 
-                /* UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
+                // UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
 
                 String r = SFController.getInstance().sendImageToAI(path, "alex_test");
                 Messages.makeToast(getApplicationContext(), r);
 
-                */
+                //*/
             }
 
             Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());

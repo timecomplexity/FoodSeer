@@ -37,6 +37,7 @@ public class ServerConn {
     private byte[] _request;              // Data to send with a request
     private String _connInfo;             // String containing connection info to server
     private CloseableHttpClient _client;  // Holds the actual connection object
+    static int currentLast = -1;
 
     public ServerConn() {
         _client = HttpClients.createDefault();
@@ -127,7 +128,7 @@ public class ServerConn {
     }
 
     public void retrieveFromDB() {
-        DBGetter g = new DBGetter();
+        DBGetter g = new DBGetter(true);
         g.execute();
         try {
             g.get();
@@ -136,7 +137,7 @@ public class ServerConn {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(g.out);
+        System.out.println(g.getCurrentLast());
     }
 
 }
@@ -225,10 +226,23 @@ class DBSender extends AsyncTask {
 
 
 class DBGetter extends AsyncTask {
+    private String result = "";
+    private boolean forLast;
+    private int idToSearch;
+    private int currentLast;
     public String out = "";
+
+    DBGetter(boolean forLast) {
+        this.forLast = forLast;
+    }
+
+    DBGetter(boolean forLast, int idToSearch) {
+        this.forLast = forLast;
+        this.idToSearch = idToSearch;
+    }
+
     @Override
     protected Object doInBackground(Object[] objects) {
-
 
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -236,21 +250,42 @@ class DBGetter extends AsyncTask {
                     "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306",
                     "root", "password");
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM image_data.image_data WHERE id=" +
-                    "(SELECT MAX(id) FROM image_data.image_data)");
+            String sql;
+            if (forLast) {
+                // Find the last ID if we don't have it
+                sql = "SELECT id FROM image_data.image_data WHERE id=" +
+                        "(SELECT MAX(id) FROM image_data.image_data)";
+            } else {
+                // Get data from last ID object otherwise
+                sql = "SELECT * FROM image_data.image_data WHERE id=" + idToSearch;
+            }
+            ResultSet rs = stmt.executeQuery(sql);
             ResultSetMetaData rsmd = rs.getMetaData();
             int columnsNumber = rsmd.getColumnCount();
 
-            while (rs.next()) {
-                for (int i = 1; i < columnsNumber; i++)
-                    out += rs.getString(i) + " ";
-                out += "\n";
+            if (forLast) {
+                // Set the current last item number
+                rs.next();
+                currentLast = rs.getInt(1);
+            } else {
+                // Get all the data out of the DB query otherwise
+                while (rs.next()) {
+                    for (int i = 1; i < columnsNumber; i++)
+                        result += rs.getString(i) + " ";
+                    result += "\n";
+                }
+                con.close();
             }
-            con.close();
+
             return null;
         } catch (Exception e) {
             System.out.println(e);
             return null;
         }
+
+    }
+
+    public int getCurrentLast() {
+        return currentLast;
     }
 }
