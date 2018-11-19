@@ -146,6 +146,10 @@ public class SFController {
 
         return result;
     }
+
+    public void createImage(String path, String fileType) {
+        _conn.getImageBytes(path);
+    }
 //
 //    public SFImage getImageFromServer() {
 //        return new SFImage(new Image());

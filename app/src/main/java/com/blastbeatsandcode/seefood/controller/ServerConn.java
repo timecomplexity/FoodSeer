@@ -166,6 +166,20 @@ public class ServerConn {
         return currentLast;
     }
 
+    public String getImageBytes(String imagePath) {
+        ImageGetter s = new ImageGetter(imagePath);
+        s.execute();
+        try {
+            s.get();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(s.result);
+        return s.result;
+    }
+
 }
 
 class Sender extends AsyncTask {
@@ -193,6 +207,43 @@ class Sender extends AsyncTask {
 
         // Add the name of the sender
         entity.addTextBody("sender", sender);
+
+        // Set up the above entity to send
+        request.setEntity(entity.build());
+
+        try {
+            // Send off to server
+            CloseableHttpResponse response = HttpClients.createDefault().execute(request);
+
+            // Give back the server response (confidence levels)
+            result =  EntityUtils.toString(response.getEntity());
+            return null;
+        } catch (IOException | ParseException e) {
+            // If we're here, everything is broken
+            return null;
+        }
+    }
+}
+
+class ImageGetter extends AsyncTask {
+    private final String filePath;
+    public String result;
+
+    ImageGetter(String filePath) {
+        this.filePath = filePath;
+    }
+
+    @Override
+    protected Object doInBackground(Object[] objects) {
+        HttpPost request = new HttpPost(
+                "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/get-image");
+
+        // Create an entity to send over POST
+        MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+        entity.setCharset(Charset.defaultCharset());
+
+        // Add the name of the sender
+        entity.addTextBody("filepath", filePath);
 
         // Set up the above entity to send
         request.setEntity(entity.build());

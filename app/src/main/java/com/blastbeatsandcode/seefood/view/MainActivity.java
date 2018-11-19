@@ -92,10 +92,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         SFController c = SFController.getInstance();
         //Messages.makeToast(this, c.getImages("s"));
         ArrayList<SFImage> t = c.getImages();
-        System.out.println(t);
-        System.out.println(t.size());
         for (SFImage i : t) {
-            System.out.println(i.getImagePath() + i.getFileType() + i.getFoodConfidence());
+            c.createImage(i.getImagePath(), i.getFileType());
         }
     }
 
