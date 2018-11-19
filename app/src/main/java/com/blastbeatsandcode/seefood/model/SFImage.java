@@ -7,21 +7,40 @@ public class SFImage {
     private float _foodConfidence;
     private float _notFoodConfidence;
     private String _sender;
+    private String _fileType;
+    private String _imagePath;
+
+    // Constructor for before having the actual image
+    public SFImage (float foodConfidence, float notFoodConfidence, String sender,
+                    String fileType, String imagePath)
+    {
+        this._foodConfidence = foodConfidence;
+        this._notFoodConfidence = notFoodConfidence;
+        this._sender = sender;
+        _imagePath = imagePath;
+        _fileType = fileType;
+    }
 
     // Constructor for SFImage with all of the components
-    SFImage (Image image, float foodConfidence, float notFoodConfidence, String sender)
+    SFImage (Image image, float foodConfidence, float notFoodConfidence, String sender,
+             String fileType, String imagePath)
     {
         this._image = image;
         this._foodConfidence = foodConfidence;
         this._notFoodConfidence = notFoodConfidence;
         this._sender = sender;
+        _imagePath = imagePath;
+        _fileType = fileType;
     }
+
 
     // Constructor for SFImage with only image given
     SFImage(Image image)
     {
         this._image = image;
     }
+
+    public String getImagePath() { return _imagePath; }
 
     // Returns the sender of the SFImage
     public String getSender()
@@ -40,7 +59,7 @@ public class SFImage {
         return _foodConfidence;
     }
 
-    public void setFoodCOnfidence(float foodConfidence)
+    public void setFoodConfidence(float foodConfidence)
     {
         this._foodConfidence = foodConfidence;
     }
@@ -56,10 +75,16 @@ public class SFImage {
         this._notFoodConfidence = notFoodConfidence;
     }
 
+    public String getFileType() {return _fileType;}
+
     // Returns the image component of the SFImage
     public Image getImage()
     {
         return _image;
+    }
+
+    public void setImage(Image image) {
+        _image = image;
     }
 
     // Generates a confidence graphic based on the food confidence and not food confidence values

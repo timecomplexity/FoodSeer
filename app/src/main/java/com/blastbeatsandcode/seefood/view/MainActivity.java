@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
 import com.blastbeatsandcode.seefood.controller.ServerConn;
+import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.utils.FileUtils;
 import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
@@ -27,6 +28,7 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 // Image Pick library used for camera: https://github.com/jrvansuita/PickImage
@@ -88,9 +90,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
 //        }
 
         SFController c = SFController.getInstance();
-        Messages.makeToast(this, c.getImages("s"));
-
-
+        //Messages.makeToast(this, c.getImages("s"));
+        ArrayList<SFImage> t = c.getImages();
+        System.out.println(t);
+        System.out.println(t.size());
+        for (SFImage i : t) {
+            System.out.println(i.getImagePath() + i.getFileType() + i.getFoodConfidence());
+        }
     }
 
     public void initialize(){ // a lot of this should probably be done by controller

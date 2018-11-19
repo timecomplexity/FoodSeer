@@ -8,6 +8,7 @@ import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.view.SFView;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Queue;
 
@@ -65,17 +66,25 @@ public class SFController {
     }
 
     // Return the images
-    public Queue<SFImage> getImages() {
-        // TODO: Update images
-        _imagesFromServer = _conn.getAllImages();
+    public ArrayList<SFImage> getImages() {
+        int currentTarget = _lastItem;
+        ArrayList<SFImage> result = new ArrayList<>();
+        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
+            // Consume one item from our current target list
+            currentTarget--;
+            // Retrieve image data from the DB
+            result.add(_conn.getSFImage(currentTarget));
+            System.out.println(currentTarget);
+            System.out.println(i);
+        }
 
-        return _imagesFromServer;
+        return result;
     }
 
     public String getImages(String s) {
         int currentTarget = _lastItem;
         String result = "";
-        for (int i = currentTarget; i > 10 && currentTarget > 10; i--) {
+        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
             // Consume one item from our current target list
             currentTarget--;
             // Retrieve image data from the DB

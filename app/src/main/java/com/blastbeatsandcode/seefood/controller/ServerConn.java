@@ -62,6 +62,18 @@ public class ServerConn {
         return g.getResult();
     }
 
+    public SFImage getSFImage(int currentTarget) {
+        DBGetter g = new DBGetter(false, currentTarget);
+        g.execute();
+        try {
+            g.get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return g.getSfi();
+    }
+
     /*
      * Send a request from passed in string
      * // TODO: Should we remove this as it is a security problem?
@@ -244,6 +256,7 @@ class DBGetter extends AsyncTask {
     private boolean forLast;
     private int idToSearch;
     private int currentLast;
+    private SFImage sfi;
 
     DBGetter(boolean forLast) {
         this.forLast = forLast;
@@ -283,9 +296,14 @@ class DBGetter extends AsyncTask {
             } else {
                 // Get all the data out of the DB query otherwise
                 while (rs.next()) {
-                    for (int i = 1; i < columnsNumber + 1; i++)
-                        result += rs.getString(i) + " ";
-                    result += "\n";
+                    String imagePath = rs.getString(1);
+                    float foodConf = rs.getFloat(2);
+                    float notFoodConf = rs.getFloat(3);
+                    String fileType = rs.getString(4);
+                    String sender = rs.getString(5);
+                    result = imagePath + " " + foodConf + " " + notFoodConf + " " + fileType + " "
+                             + sender;
+                    sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath);
                 }
                 con.close();
             }
@@ -301,6 +319,8 @@ class DBGetter extends AsyncTask {
     public int getCurrentLast() {
         return currentLast;
     }
+
+    public SFImage getSfi() { return sfi; }
 
     public String getResult() {
         return result;
