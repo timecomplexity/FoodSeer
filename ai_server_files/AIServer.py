@@ -30,7 +30,6 @@ app = Flask(__name__)
 # This is a sort of pseudo-class... Poss re-add later
 # class SeeFoodAI:
     
-# This is the only call that is actually exposed over web
 # Also note this code is heavily inspired by Dr. Derek Doran's
 #   find_food.py example
 @app.route("/api/ai-decision", methods=['POST'])
@@ -47,7 +46,6 @@ def get_ai_decision():
         out.write(request.files.get("image").read())
         
     # Create a tensor from the image
-    # TODO: See if we still want to resize in utils, or if this works
     image = Image.open(file_name).convert('RGB')
     image = image.resize((227, 227), Image.BILINEAR)
     img_tensor = [np.asarray(image, dtype=np.float32)]
@@ -57,6 +55,15 @@ def get_ai_decision():
     
     # Return the result   
     return file_name + "," + str(scores[0][0]) + "," + str(scores[0][1])
+    
+# Allows us to get an image back down from the DB
+@app.route("/api/get-image", methods=["POST"])
+def get_image():
+    # Pull file name from the request object
+    filepath = request.form.get("filepath")
+    
+    # Return the file object
+    return open(filepath, 'r').read()
     
 def _extract_food_confidence():
     pass
