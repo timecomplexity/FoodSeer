@@ -78,14 +78,14 @@ public class MainActivity extends AppCompatActivity implements SFView {
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
         // TODO: Update this so it doesn't crash the app when the server isn't running
-        try {
-            ServerConn sc = new ServerConn();
-            System.out.println("before");
-            sc.retrieveLastDBItemId();
-            System.out.println("after");
-        } catch (Exception e) {
-            Messages.makeToast(getApplicationContext(), "Server is not running!");
-        }
+//        try {
+//            ServerConn sc = new ServerConn();
+//            System.out.println("before");
+//            sc.retrieveLastDBItemId();
+//            System.out.println("after");
+//        } catch (Exception e) {
+//            Messages.makeToast(getApplicationContext(), "Server is not running!");
+//        }
 
         SFController c = SFController.getInstance();
         Messages.makeToast(this, c.getImages("s"));

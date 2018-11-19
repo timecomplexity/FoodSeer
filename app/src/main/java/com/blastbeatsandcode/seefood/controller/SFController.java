@@ -115,8 +115,6 @@ public class SFController {
             imagePath = imagePath.replace("/storage/emulated/0", "");
         }
 
-
-
         // Get the result of the AI processing
         String result = _conn.uploadImage(imagePath, sender);
         try {
@@ -133,6 +131,9 @@ public class SFController {
         } catch (RuntimeException e) {
             System.out.println("Response not received...");
         }
+
+        // Update our current last DB item
+        _lastItem = _conn.retrieveLastDBItemId();
 
         return result;
     }
