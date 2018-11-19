@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 """
 This code is the SeeFood AI wrapper, exposing API calls over
 the network so that we can call the SeeFood AI on the remote
@@ -37,7 +39,7 @@ def get_ai_decision():
     file_name = "/home/ubuntu/seefood/images/" + datetime.now().strftime("%Y%m%d%H%M%S")
     image_number = 1
     while isfile(file_name):
-        file_name += image_number
+        file_name += str(image_number)
         image_number += 1
         
     # Save off the file in our images database
