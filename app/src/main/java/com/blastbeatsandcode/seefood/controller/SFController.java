@@ -1,18 +1,13 @@
 package com.blastbeatsandcode.seefood.controller;
 
 
-import android.media.Image;
+import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.model.SFImage;
+import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.view.SFView;
 
-import org.apache.hc.core5.http.io.entity.StringEntity;
-
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Queue;
 
@@ -28,8 +23,11 @@ public class SFController {
     // Hold a collection of views so they may be referenced
     private ArrayList<SFView> _views;
 
+    // Hold a collection of views so they may be referenced
+    private ArrayList<File> _selectedImages;
+
     // Collection of the images from the server
-    private Queue<SFImage> _images;
+    private Queue<SFImage> _imagesFromServer;
 
     // Connection to the server object
     private ServerConn _conn = new ServerConn();
@@ -49,6 +47,7 @@ public class SFController {
     private SFController()
     {
         _views = new ArrayList<SFView>();
+        _selectedImages = new ArrayList<File>();
     }
 
     // Only create a new instance of the SF controller if it does not already exist.
@@ -64,10 +63,27 @@ public class SFController {
     // Return the images
     public Queue<SFImage> getImages() {
         // TODO: Update images
-        _images = _conn.getAllImages();
+        _imagesFromServer = _conn.getAllImages();
 
-        return _images;
+        return _imagesFromServer;
     }
+
+    /*
+     * Add image to the list to upload
+     */
+    public void addImageToUpload(File image) {
+        // Add the image to the list and update the views
+        _selectedImages.add(image);
+        update();
+    }
+
+    /*
+     * Retrieve images in list to be uploaded
+     */
+    public ArrayList<File> getImagesToUpload() {
+        return _selectedImages;
+    }
+
 
     /**
      * Send image to AI for processing
@@ -76,25 +92,36 @@ public class SFController {
      * @return Result of AI processing
      */
     public String sendImageToAI(String imagePath, String sender) {
+        // Remove the extra bit from the URI
+        if (imagePath.contains("/storage/emulated/0"))
+        {
+            imagePath = imagePath.replace("/storage/emulated/0", "");
+        }
+
+
         // Get the result of the AI processing
+        String result = _conn.uploadImage(imagePath, sender);
+        try {
+            // Get image data
+            String[] splitResult = result.split(",");
+            String fileName = splitResult[0];
+            String foodConf = splitResult[1];
+            String notFoodConf = splitResult[2];
+            String[] pathData = imagePath.split("\\.");
+            String imageType = pathData[pathData.length - 1];
 
-        //String result = _conn.uploadImage(imagePath, sender);
-        String result = "testname,testconf,testnotconf";
-        //TODO: remove above test case and uncomment code. (Had to do this because it throws an error for me)
-
-        // Get image data
-        String[] splitResult = result.split(",");
-        String fileName = splitResult[0];
-        String foodConf = splitResult[1];
-        String notFoodConf = splitResult[2];
-        String[] pathData = imagePath.split("\\.");
-        String imageType = pathData[pathData.length - 1];
-
-        // Save data to DB for later retrieval
-        _conn.uploadToDB(fileName, foodConf, notFoodConf, imageType, sender);
+            // Save data to DB for later retrieval
+            _conn.uploadToDB(fileName, foodConf, notFoodConf, imageType, sender);
+        } catch (RuntimeException e) {
+            System.out.println("Response not received...");
+        }
 
         return result;
     }
+//
+//    public SFImage getImageFromServer() {
+//        return new SFImage(new Image());
+//    }
 
 
     /*

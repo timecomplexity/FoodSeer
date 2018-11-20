@@ -11,6 +11,7 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -125,8 +126,17 @@ public class ServerConn {
         s.execute();
     }
 
-    public void retrieveFromDB(SFImage sfi) {
-        //pass
+    public void retrieveFromDB() {
+        DBGetter g = new DBGetter();
+        g.execute();
+        try {
+            g.get();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(g.out);
     }
 
 }
@@ -200,9 +210,42 @@ class DBSender extends AsyncTask {
                     "root", "password");
             Statement stmt = con.createStatement();
             // Insert data into the table (this is disgusting!)
-            String sql = "INSERT INTO image_data.image_data VALUES (\'" + fileName +
-                    "\'," + foodConf + "," + notFoodConf + ",\'" + imageType + "\',\'" + sender + "\')";
+            String sql = "INSERT INTO image_data.image_data (path, foodconf, notfoodconf, type, " +
+                    "sender) VALUES (\'" + fileName + "\'," + foodConf + "," + notFoodConf +
+                    ",\'" + imageType + "\',\'" + sender + "\')";
             stmt.executeUpdate(sql);
+            con.close();
+            return null;
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+}
+
+
+class DBGetter extends AsyncTask {
+    public String out = "";
+    @Override
+    protected Object doInBackground(Object[] objects) {
+
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                    "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306",
+                    "root", "password");
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM image_data.image_data WHERE id=" +
+                    "(SELECT MAX(id) FROM image_data.image_data)");
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnsNumber = rsmd.getColumnCount();
+
+            while (rs.next()) {
+                for (int i = 1; i < columnsNumber; i++)
+                    out += rs.getString(i) + " ";
+                out += "\n";
+            }
             con.close();
             return null;
         } catch (Exception e) {

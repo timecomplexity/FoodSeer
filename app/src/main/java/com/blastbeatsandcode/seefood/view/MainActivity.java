@@ -1,16 +1,12 @@
 package com.blastbeatsandcode.seefood.view;
 
-import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,17 +18,18 @@ import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
+import com.blastbeatsandcode.seefood.controller.ServerConn;
+import com.blastbeatsandcode.seefood.utils.FileUtils;
+import com.blastbeatsandcode.seefood.utils.Messages;
+import com.blastbeatsandcode.seefood.utils.SFConstants;
+import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
+import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
@@ -74,24 +71,24 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // initialize
 
         initialize();
-        //Image[] gallery = new Image[10];
-        //TODO have this ^ come from somehwere else and be filled with
+      
+        Image[] gallery = new Image[10];
+        //TODO have this ^ come from somewhere else and be filled with
         // the latest x (10) images excluding the most recent one
         // also these might want to be an seeFoodImage objects which have data about foodness rather than just
         // images so populating the gallery is easier :)
         //populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
-        //TODO: remove this
-        /////////////////////////////////////////
-        // TEST CODE -- REMOVE FROM PRODUCTION //
-        /////////////////////////////////////////
-        //SFController c = SFController.getInstance();
-        //String r = c.sendImageToAI("/DCIM/Drawings/09082018161409.png", "adam_test");
-        //Toast toast = Toast.makeText(getApplicationContext(), r, Toast.LENGTH_SHORT);
-        //toast.show();
-        // END TEST CODE //
-
+        // TODO: Update this so it doesn't crash the app when the server isn't running
+        try {
+            ServerConn sc = new ServerConn();
+            System.out.println("before");
+            sc.retrieveFromDB();
+            System.out.println("after");
+        } catch (Exception e) {
+            Messages.makeToast(getApplicationContext(), "Server is not running!");
+        }
     }
 
     public void initialize(){ // a lot of this should probably be done by controller
@@ -193,15 +190,53 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void uploadImage() {
-        // invoke image gallery with implicit intent
-        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-        // specify where to find image
-        File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        String pictureDirectoryPath = pictureDirectory.getPath();
-        Uri data = Uri.parse(pictureDirectoryPath);
-        photoPickerIntent.setDataAndType(data, "image/*"); // accepts all image types
-        photoPickerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true); // allow selection of multiple items
-        startActivityForResult(photoPickerIntent, REQUEST_CODE_FOR_IMAGE_SELECTION);
+        Intent intent = new Intent(this, AlbumSelectActivity.class);
+        //set limit on number of images that can be selected, default is 10
+        //intent.putExtra(Constants.INTENT_EXTRA_LIMIT, numberOfImagesToSelect);
+        startActivityForResult(intent, Constants.REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Handle what to do after images have been selected from the gallery
+        if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            //The array list has the image paths of the selected images
+            ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
+            for (Object image : images) {
+                // Send each image to the AI
+                String path = ((com.darsh.multipleimageselect.models.Image) image).path;
+                File imageFile = new File(path);
+                //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
+                SFController.getInstance().addImageToUpload(imageFile);
+
+
+                /* UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
+
+                String r = SFController.getInstance().sendImageToAI(path, "alex_test");
+                Messages.makeToast(getApplicationContext(), r);
+
+                */
+            }
+
+            Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
+        } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
+            Bitmap image = (Bitmap) data.getExtras().get("data");
+            // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+            Uri tempUri = FileUtils.getImageUri(getApplicationContext(), image);
+
+            // CALL THIS METHOD TO GET THE ACTUAL PATH
+            File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
+            SFController.getInstance().addImageToUpload(imageFile);
+            Messages.makeToast(getApplicationContext(), "Number of images in list: " + SFController.getInstance().getImagesToUpload().size());
+
+            // Send the image to the AI with the absolute path
+            String absPath = imageFile.getAbsolutePath();
+            System.out.println("ABSOLUTE PATH: " + absPath);
+            String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
+            Messages.makeToast(getApplicationContext(), r);
+            //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
+            //Messages.makeToast(getApplicationContext(), r);
+        }
     }
 
     @Override
@@ -211,66 +246,14 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void takePicture() {
+        // Start the activity for taking a picture
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, REQUEST_CODE_FOR_CAMERA);
+        startActivityForResult(intent, SFConstants.TAKE_PICTURE_REQUEST_CODE);
     }
 
-    @Override //called after takePicture() method and after uploadImage()
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (resultCode == RESULT_OK){
-            ArrayList<Bitmap> images = new ArrayList<Bitmap>();
-            if (requestCode == REQUEST_CODE_FOR_IMAGE_SELECTION){ // user is trying to upload image
-
-
-//                Uri imageUri = data.getData(); // the address of the image
-//                InputStream inputStream; //declare stream to read image data
-//                try { // exception could be that image is missing after selection
-//                    inputStream = getContentResolver().openInputStream(imageUri);
-//                    images.add(BitmapFactory.decodeStream(inputStream));
-//                    processImages(images);
-//                } catch (FileNotFoundException e) {
-//                    e.printStackTrace();
-//                    Toast.makeText(this, "Unable to open image from internal storage", Toast.LENGTH_LONG).show();
-
-
-                int count = data.getClipData().getItemCount();
-                Uri imageUri = data.getData();
-                InputStream inputStream; //declare stream to read image data
-                for(int i = 0; i < count; i++) {
-                    imageUri = data.getClipData().getItemAt(i).getUri();
-                    try { // exception could be that image is missing after selection
-                        inputStream = getContentResolver().openInputStream(imageUri);
-                        images.add(BitmapFactory.decodeStream(inputStream));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                        Toast.makeText(this, "Unable to open image from internal storage", Toast.LENGTH_LONG).show();
-                    }
-                }
-                processImages(images);
-            } else if (requestCode == REQUEST_CODE_FOR_CAMERA){
-                try {
-                    images.add((Bitmap)data.getExtras().get("data"));
-                    processImages(images);
-                } catch (Exception e) { // bad code
-                    e.printStackTrace();
-                    Toast.makeText(this, "Unable to process photo that was taken", Toast.LENGTH_LONG).show();
-                }
-            }
-        }
-        //super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    public void processImages(ArrayList<Bitmap> images){
-        textMainImageCoverup.setText("Processing...");
-        imageMainResult.setImageBitmap(images.get(images.size()-1)); //set last image as main image
-        //TODO: replace above line to send pictures to db
-        textMainImageCoverup.setText(""); // get rid of status message when picture is finished processing
-        textMainImageCoverup.setText(Integer.toString(images.size()));
-        populateGallery(images);
-    }
 
     @Override
     public void update() {
-
+        // TODO: UPDATE THE VIEW
     }
 }
