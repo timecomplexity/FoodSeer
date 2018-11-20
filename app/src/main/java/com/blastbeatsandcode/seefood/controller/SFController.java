@@ -99,7 +99,6 @@ public class SFController {
         }
 
 
-
         // Get the result of the AI processing
         String result = _conn.uploadImage(imagePath, sender);
         try {

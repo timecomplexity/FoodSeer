@@ -1,15 +1,15 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
-import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -18,7 +18,6 @@ import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
@@ -30,19 +29,18 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-
-// Image Pick library used for camera: https://github.com/jrvansuita/PickImage
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
+    public static final int REQUEST_CODE_FOR_IMAGE_SELECTION = 0;
+    public static final int REQUEST_CODE_FOR_CAMERA = 1;
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
     private static ImageButton buttonCamera;
     private static ImageButton buttonUpload;
     private static ImageView imageMainResult;
-    private static TextView textNoneUploadedYet;
+    private static TextView textMainImageCoverup;
     private static SeekBar seekbarMainResult;
     private static TextView textMainResult;
     private static TableLayout tableGallery;
@@ -58,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         buttonCamera = (ImageButton)findViewById(R.id.buttonCamera);
         buttonUpload = (ImageButton)findViewById(R.id.buttonUpload);
         imageMainResult = (ImageView)findViewById(R.id.imageMainResult);
-        textNoneUploadedYet = (TextView)findViewById(R.id.textNoneUploadedYet);
+        textMainImageCoverup = (TextView)findViewById(R.id.textMainImageCoverup);
         seekbarMainResult = (SeekBar)findViewById(R.id.seekbarMainResult);
         seekbarMainResult.setEnabled(false); // make the seekbar frozen
         textMainResult = (TextView)findViewById(R.id.textMainResult);
@@ -73,12 +71,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // initialize
 
         initialize();
+      
         Image[] gallery = new Image[10];
         //TODO have this ^ come from somewhere else and be filled with
         // the latest x (10) images excluding the most recent one
         // also these might want to be an seeFoodImage objects which have data about foodness rather than just
         // images so populating the gallery is easier :)
-        populateGallery(gallery);
+        //populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
         // TODO: Update this so it doesn't crash the app when the server isn't running
@@ -90,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
         } catch (Exception e) {
             Messages.makeToast(getApplicationContext(), "Server is not running!");
         }
-
     }
 
     public void initialize(){ // a lot of this should probably be done by controller
@@ -103,15 +101,18 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // populate the gallery
     }
 
-    private void populateGallery(Image[] gallery) {
-        for (Image i: gallery){ //for each image in gallery array
+    private void populateGallery(ArrayList<Bitmap> gallery) {
+        int count = 0;
+        for (Bitmap i: gallery){ //for each image in gallery array
             TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
-            ((ImageView)row.findViewById(R.id.galleryImage)).setImageResource(R.drawable.defaultimage);
+            ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(gallery.get(count));
             ((TextView)row.findViewById(R.id.galleryText)).setText("test");
             ((SeekBar)row.findViewById(R.id.gallerySeekbar)).setEnabled(false);
             tableGallery.addView(row);
             // TODO populate more based on object's attributes
+            count++;
         }
+        // TODO add a button to view more
 
     }
 
@@ -167,6 +168,25 @@ public class MainActivity extends AppCompatActivity implements SFView {
         );
     }
 
+    @Override
+    public void displayHelp() {
+        String helpText = "This app is quite simple. To start, first tap either"+
+        " the camera or the upload button.\nNext, take a picture or select a picture to upload. Your"+
+        " image will be processed by an AI and tested for how likely it is to be food! When the processing"+
+        " is finished, your latest image will appear and show how \"food\" it is! To see previously uploaded "+
+        " images, just scroll down.\n\nHappy SeeFooding!";
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setCancelable(true); //allow user to close popup
+        builder.setTitle("Welcome to SeeFood!");
+        builder.setMessage(helpText);
+        builder.setNegativeButton("Great!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+            }
+        });
+        builder.show();
+    }
 
     @Override
     public void uploadImage() {
@@ -221,12 +241,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void viewGallery() {
-        // TODO: Implement this!
-    }
 
-    @Override
-    public void displayHelp() {
-        // TODO: Implement this!
     }
 
     @Override

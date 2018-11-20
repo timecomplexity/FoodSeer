@@ -63,7 +63,7 @@
                     app:srcCompat="@color/colorPrimary" />
 
                 <TextView
-                    android:id="@+id/textNoneUploadedYet"
+                    android:id="@+id/textMainImageCoverup"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -92,38 +92,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <TableRow
-                    android:id="@+id/galRow0"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/galRow2"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/galRow3"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/galRow4"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/galRow5"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
             </TableLayout>
 
         </LinearLayout>
