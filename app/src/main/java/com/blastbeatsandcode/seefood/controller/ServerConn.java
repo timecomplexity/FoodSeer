@@ -105,13 +105,6 @@ public class ServerConn {
         _request = data;
     }
 
-    /*
-     * Connect to the server
-     */
-    private boolean connectToServer() {
-        // TODO: Implement this, return whether we are connected or not
-        return false;
-    }
 
     /**
      * Upload single image for AI decision
@@ -356,7 +349,6 @@ class DBGetter extends AsyncTask {
             }
             ResultSet rs = stmt.executeQuery(sql);
             ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
 
             if (forLast) {
                 // Set the current last item number

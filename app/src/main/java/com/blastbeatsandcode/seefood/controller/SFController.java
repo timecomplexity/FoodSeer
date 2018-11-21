@@ -67,28 +67,14 @@ public class SFController {
 
     // Return the images
     public ArrayList<SFImage> getImages() {
-        int currentTarget = _lastItem;
+        // There's an off-by-one error or something here, so we have this
+        int currentTarget = _lastItem + 1;
         ArrayList<SFImage> result = new ArrayList<>();
-        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
+        for (int i = currentTarget; i > _lastItem - 9 && currentTarget >= 10; i--) {
             // Consume one item from our current target list
             currentTarget--;
             // Retrieve image data from the DB
             result.add(_conn.getSFImage(currentTarget));
-            System.out.println(currentTarget);
-            System.out.println(i);
-        }
-
-        return result;
-    }
-
-    public String getImages(String s) {
-        int currentTarget = _lastItem;
-        String result = "";
-        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
-            // Consume one item from our current target list
-            currentTarget--;
-            // Retrieve image data from the DB
-            result += _conn.getImageData(currentTarget) + "\n";
         }
 
         return result;
