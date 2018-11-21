@@ -79,18 +79,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
-        // TODO: Update this so it doesn't crash the app when the server isn't running
-//        try {
-//            ServerConn sc = new ServerConn();
-//            System.out.println("before");
-//            sc.retrieveLastDBItemId();
-//            System.out.println("after");
-//        } catch (Exception e) {
-//            Messages.makeToast(getApplicationContext(), "Server is not running!");
-//        }
-
         SFController c = SFController.getInstance();
-        //Messages.makeToast(this, c.getImages("s"));
         ArrayList<SFImage> t = c.getImages();
         for (SFImage i : t) {
             c.createImage(i.getImagePath(), i.getFileType());
@@ -193,13 +182,14 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
                 SFController.getInstance().addImageToUpload(imageFile);
 
-
-                // UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
-
                 String r = SFController.getInstance().sendImageToAI(path, "alex_test");
                 Messages.makeToast(getApplicationContext(), r);
 
-                //*/
+                SFController c = SFController.getInstance();
+                ArrayList<SFImage> t = c.getImages();
+                for (SFImage i : t) {
+                    c.createImage(i.getImagePath(), i.getFileType());
+                }
             }
 
             Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
@@ -220,6 +210,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
             Messages.makeToast(getApplicationContext(), r);
             //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
             //Messages.makeToast(getApplicationContext(), r);
+
+            SFController c = SFController.getInstance();
+            ArrayList<SFImage> t = c.getImages();
+            for (SFImage i : t) {
+                c.createImage(i.getImagePath(), i.getFileType());
+            }
         }
     }
 

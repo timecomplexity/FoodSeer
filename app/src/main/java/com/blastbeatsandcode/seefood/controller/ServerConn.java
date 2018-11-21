@@ -1,12 +1,18 @@
 package com.blastbeatsandcode.seefood.controller;
 
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.RequiresApi;
 
 import com.blastbeatsandcode.seefood.model.SFImage;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -166,17 +172,10 @@ public class ServerConn {
         return currentLast;
     }
 
-    public String getImageBytes(String imagePath) {
-        ImageGetter s = new ImageGetter(imagePath);
+    public String getImageBytes(String imagePath, String fileType) {
+        ImageGetter s = new ImageGetter(imagePath, fileType);
         s.execute();
-        try {
-            s.get();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println(s.result);
+
         return s.result;
     }
 
@@ -227,10 +226,12 @@ class Sender extends AsyncTask {
 
 class ImageGetter extends AsyncTask {
     private final String filePath;
+    private final String fileType;
     public String result;
 
-    ImageGetter(String filePath) {
+    ImageGetter(String filePath, String fileType) {
         this.filePath = filePath;
+        this.fileType = fileType;
     }
 
     @Override
@@ -242,7 +243,7 @@ class ImageGetter extends AsyncTask {
         MultipartEntityBuilder entity = MultipartEntityBuilder.create();
         entity.setCharset(Charset.defaultCharset());
 
-        // Add the name of the sender
+        // Add the filepath
         entity.addTextBody("filepath", filePath);
 
         // Set up the above entity to send
@@ -253,10 +254,27 @@ class ImageGetter extends AsyncTask {
             CloseableHttpResponse response = HttpClients.createDefault().execute(request);
 
             // Give back the server response (confidence levels)
-            result =  EntityUtils.toString(response.getEntity());
+            InputStream input = response.getEntity().getContent();
+
+            // Get the name of the file
+            String[] filenameParts = filePath.split("/");
+            String filename = filenameParts[filenameParts.length - 1];
+
+            // Write the file to the storage directory
+            File rootPath = Environment.getExternalStorageDirectory();
+            File f = new File(rootPath + "/DCIM/seefoodtemp/");
+            if (!f.isDirectory()) { f.mkdir(); }
+            FileOutputStream out = new FileOutputStream(rootPath + "/DCIM/seefoodtemp/" +
+                                                        filename + "." + fileType);
+            byte[] buffer = new byte[1024];
+            for (int length; (length = input.read(buffer)) > 0;) {
+                out.write(buffer, 0, length);
+            }
+
             return null;
-        } catch (IOException | ParseException e) {
+        } catch (IOException e) {
             // If we're here, everything is broken
+            e.printStackTrace();
             return null;
         }
     }
