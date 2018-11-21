@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -240,5 +241,25 @@ public class MainActivity extends AppCompatActivity implements SFView {
     @Override
     public void update() {
         // TODO: UPDATE THE VIEW
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
+
+        // Get the files in the directory
+        File rootPath = Environment.getExternalStorageDirectory();
+        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
+        File[] listOfFiles = folder.listFiles();
+
+        // Delete all the images in the folder
+        for (File f : listOfFiles) {
+            f.delete();
+        }
+
+        // Delete the folder (so it never even happened)
+        folder.delete();
     }
 }
