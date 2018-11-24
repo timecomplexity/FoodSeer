@@ -257,30 +257,8 @@ class ImageGetter extends AsyncTask {
             // Give back the server response (confidence levels)
             InputStream input = response.getEntity().getContent();
 
-            // Get the name of the file
-            String[] filenameParts = filePath.split("/");
-            String filename = filenameParts[filenameParts.length - 1];
-
-            // Write the file to the storage directory
-            File rootPath = Environment.getExternalStorageDirectory();
-            File f = new File(rootPath + "/DCIM/seefoodtemp/");
-            if (!f.isDirectory()) { f.mkdir(); }
-            FileOutputStream out = new FileOutputStream(rootPath + "/DCIM/seefoodtemp/" +
-                                                        filename + "." + fileType);
-            byte[] buffer = new byte[1024];
-            for (int length; (length = input.read(buffer)) > 0;) {
-                out.write(buffer, 0, length);
-            }
-            System.out.println("PATH IS: " + rootPath + "/DCIM/seefoodtemp/" +
-                    filename + "." + fileType);
-
-            Bitmap bmp = BitmapFactory.decodeFile(rootPath + "/DCIM/seefoodtemp/" +
-                    filename + "." + fileType);
-            this.bitmap = bmp;
-
-//            // Create an image from the inputstream
-//            Bitmap bmp = BitmapFactory.decodeStream(input);
-//            this.bitmap = bmp;
+            // Create an image from the inputstream
+            bitmap = BitmapFactory.decodeStream(input);
 
             return null;
         } catch (IOException e) {
@@ -366,7 +344,6 @@ class DBGetter extends AsyncTask {
                 sql = "SELECT * FROM image_data.image_data WHERE id=" + idToSearch;
             }
             ResultSet rs = stmt.executeQuery(sql);
-            ResultSetMetaData rsmd = rs.getMetaData();
 
             if (forLast) {
                 // Set the current last item number
@@ -384,7 +361,34 @@ class DBGetter extends AsyncTask {
                              + sender;
 
                     // Get the bitmap information
-                    Bitmap bmp = new ImageGetter(imagePath, fileType).bitmap;
+                    HttpPost request = new HttpPost(
+                            "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/get-image");
+
+                    // Create an entity to send over POST
+                    MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+                    entity.setCharset(Charset.defaultCharset());
+
+                    // Add the filepath
+                    entity.addTextBody("filepath", imagePath);
+
+                    // Set up the above entity to send
+                    request.setEntity(entity.build());
+                    Bitmap bmp = null;
+
+                    try {
+                        // Send off to server
+                        CloseableHttpResponse response = HttpClients.createDefault().execute(request);
+
+                        // Give back the server response (confidence levels)
+                        InputStream input = response.getEntity().getContent();
+
+                        // Create an image from the inputstream
+                        bmp = BitmapFactory.decodeStream(input);
+                    } catch (IOException e) {
+                        // If we're here, everything is broken
+                        e.printStackTrace();
+                    }
+
                     sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath, bmp);
                 }
                 con.close();

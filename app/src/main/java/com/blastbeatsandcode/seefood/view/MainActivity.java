@@ -100,7 +100,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
         });
 
         ImageView imageView = new ImageView(this);
-        imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
+        System.out.println(b);
+        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
         builder.addContentView(imageView, new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
