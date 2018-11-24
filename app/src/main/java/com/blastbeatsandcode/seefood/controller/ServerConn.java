@@ -1,9 +1,10 @@
 package com.blastbeatsandcode.seefood.controller;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
-import android.support.annotation.RequiresApi;
 
 import com.blastbeatsandcode.seefood.model.SFImage;
 
@@ -11,15 +12,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
@@ -31,7 +29,6 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 
 /*
  * The ServerConn class handles the connection between the SeeFood app
@@ -165,15 +162,25 @@ public class ServerConn {
         return currentLast;
     }
 
-    public String getImageBytes(String imagePath, String fileType) {
+//    public String getImageBytes(String imagePath, String fileType) {
+//        ImageGetter s = new ImageGetter(imagePath, fileType);
+//        s.execute();
+//
+//        return s.result;
+//    }
+
+    public Bitmap getImageBytes(String imagePath, String fileType) {
         ImageGetter s = new ImageGetter(imagePath, fileType);
         s.execute();
 
-        return s.result;
+        return s.bitmap;
     }
 
 }
 
+/*
+ * Sender sends requests to the server
+ */
 class Sender extends AsyncTask {
     private final String filePath;
     private final String sender;
@@ -220,7 +227,8 @@ class Sender extends AsyncTask {
 class ImageGetter extends AsyncTask {
     private final String filePath;
     private final String fileType;
-    public String result;
+    //public String result;
+    public Bitmap bitmap;
 
     ImageGetter(String filePath, String fileType) {
         this.filePath = filePath;
@@ -263,6 +271,16 @@ class ImageGetter extends AsyncTask {
             for (int length; (length = input.read(buffer)) > 0;) {
                 out.write(buffer, 0, length);
             }
+            System.out.println("PATH IS: " + rootPath + "/DCIM/seefoodtemp/" +
+                    filename + "." + fileType);
+
+            Bitmap bmp = BitmapFactory.decodeFile(rootPath + "/DCIM/seefoodtemp/" +
+                    filename + "." + fileType);
+            this.bitmap = bmp;
+
+//            // Create an image from the inputstream
+//            Bitmap bmp = BitmapFactory.decodeStream(input);
+//            this.bitmap = bmp;
 
             return null;
         } catch (IOException e) {
@@ -364,7 +382,10 @@ class DBGetter extends AsyncTask {
                     String sender = rs.getString(5);
                     result = imagePath + " " + foodConf + " " + notFoodConf + " " + fileType + " "
                              + sender;
-                    sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath);
+
+                    // Get the bitmap information
+                    Bitmap bmp = new ImageGetter(imagePath, fileType).bitmap;
+                    sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath, bmp);
                 }
                 con.close();
             }

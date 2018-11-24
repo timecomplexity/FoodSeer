@@ -28,7 +28,7 @@ public class SFController {
     private ArrayList<File> _selectedImages;
 
     // Collection of the images from the server
-    private Queue<SFImage> _imagesFromServer;
+    private ArrayList<SFImage> _imagesFromServer;
 
     // Connection to the server object
     private ServerConn _conn = new ServerConn();
@@ -52,6 +52,7 @@ public class SFController {
     {
         _views = new ArrayList<SFView>();
         _selectedImages = new ArrayList<File>();
+        _imagesFromServer = new ArrayList<SFImage>();
         _lastItem = _conn.retrieveLastDBItemId();
     }
 
@@ -74,11 +75,33 @@ public class SFController {
             // Consume one item from our current target list
             currentTarget--;
             // Retrieve image data from the DB
-            result.add(_conn.getSFImage(currentTarget));
+            SFImage img = _conn.getSFImage((currentTarget));
+
+            // Add the image to the result array and to the images from server array
+            result.add(img);
+            _imagesFromServer.add(img);
         }
+
+        for (int i = 0; i < _imagesFromServer.size(); i++)
+            System.out.println("IMAGE INFORMATION: " + _imagesFromServer.get(i).getImagePath());
 
         return result;
     }
+
+
+    /*
+     * Return the last image from the server
+     */
+    public SFImage getLastImage() {
+        if (_imagesFromServer.size() <= 0)
+        {
+            getImages();
+        }
+
+        return _imagesFromServer.get(0);
+    }
+
+
 
     /*
      * Add image to the list to upload

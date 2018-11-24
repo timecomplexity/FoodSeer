@@ -1,6 +1,12 @@
 package com.blastbeatsandcode.seefood.model;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.media.Image;
+import android.text.Html;
+
+import java.nio.ByteBuffer;
 
 public class SFImage {
     private Image _image;
@@ -9,6 +15,20 @@ public class SFImage {
     private String _sender;
     private String _fileType;
     private String _imagePath;
+    private Bitmap _bitmap;
+
+
+    // Constructor with bitmap
+    public SFImage (float foodConfidence, float notFoodConfidence, String sender,
+                    String fileType, String imagePath, Bitmap bitmap)
+    {
+        this._foodConfidence = foodConfidence;
+        this._notFoodConfidence = notFoodConfidence;
+        this._sender = sender;
+        _imagePath = imagePath;
+        _fileType = fileType;
+        _bitmap = bitmap;
+    }
 
     // Constructor for before having the actual image
     public SFImage (float foodConfidence, float notFoodConfidence, String sender,
@@ -81,6 +101,23 @@ public class SFImage {
     public Image getImage()
     {
         return _image;
+    }
+
+    // Returns the bitmap version of the image
+    public Bitmap getImageBitmap() {
+        return _bitmap;
+//        try {
+//            ByteBuffer buffer = _image.getPlanes()[0].getBuffer();
+//            byte[] bytes = new byte[buffer.remaining()];
+//            buffer.get(bytes);
+//            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+//        } catch (NullPointerException e) {
+//            System.out.println("Null pointer exception; the image is null.");
+//            int w = 500, h = 500;
+//
+//            Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
+//            return Bitmap.createBitmap(w, h, conf); // this creates a MUTABLE bitmap
+//        }
     }
 
     public void setImage(Image image) {

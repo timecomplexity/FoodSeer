@@ -1,18 +1,27 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -29,7 +38,7 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 // Image Pick library used for camera: https://github.com/jrvansuita/PickImage
@@ -70,21 +79,32 @@ public class MainActivity extends AppCompatActivity implements SFView {
         uploadListener();
 
         // initialize
-
         initialize();
-        Image[] gallery = new Image[10];
-        //TODO have this ^ come from somewhere else and be filled with
-        // the latest x (10) images excluding the most recent one
-        // also these might want to be an seeFoodImage objects which have data about foodness rather than just
-        // images so populating the gallery is easier :)
-        populateGallery(gallery);
-        appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
+    }
 
-        SFController c = SFController.getInstance();
-        ArrayList<SFImage> t = c.getImages();
-        for (SFImage i : t) {
-            c.createImage(i.getImagePath(), i.getFileType());
-        }
+
+    /**
+     * TESTING THE IMAGE VIEW
+     *
+     */
+    public void showImage() {
+        Dialog builder = new Dialog(this);
+        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        builder.getWindow().setBackgroundDrawable(
+                new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                //nothing;
+            }
+        });
+
+        ImageView imageView = new ImageView(this);
+        imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        builder.show();
     }
 
     public void initialize(){ // a lot of this should probably be done by controller
@@ -95,8 +115,30 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // based on main image, set seekbarMainResult and textMainResult
             // appropriateView(get this somehow,seekbarMainResult,textMainResult );
         // populate the gallery
+
+
+
+
+        // TODO: FIX THIS
+        Image[] gallery = new Image[10];
+        //TODO have this ^ come from somewhere else and be filled with
+        // the latest x (10) images excluding the most recent one
+        // also these might want to be an seeFoodImage objects which have data about foodness rather than just
+        // images so populating the gallery is easier :)
+        populateGallery(gallery);
+        appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
+
+        ArrayList<SFImage> t = SFController.getInstance().getImages();
+        for (SFImage i : t) {
+            SFController.getInstance().createImage(i.getImagePath(), i.getFileType());
+        }
+
+        // Get the last uploaded image from the server and set it to the last uploaded image
+        imageMainResult.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+        System.out.println("LAST IMAGE INFO: " + SFController.getInstance().getLastImage().getImagePath());
     }
 
+    // TODO: Update this with real images
     private void populateGallery(Image[] gallery) {
         for (Image i: gallery){ //for each image in gallery array
             TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
@@ -133,7 +175,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
             new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     // Call the Display Help method
-                    displayHelp();
+                    //displayHelp();
+                    showImage();
                 }
             }
         );
