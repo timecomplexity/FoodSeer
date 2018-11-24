@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.blastbeatsandcode.seefood"
-        minSdkVersion 16
+        minSdkVersion 21 //changed from 16 to allow seekbar coloring
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"

@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // also these might want to be an seeFoodImage objects which have data about foodness rather than just
         // images so populating the gallery is easier :)
         //populateGallery(gallery);
-        appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
+        appropriateView(1, 1,seekbarMainResult,textMainResult ); //TODO remove later
 
         // TODO: Update this so it doesn't crash the app when the server isn't running
         try {
@@ -118,21 +118,24 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     // for now, foodness is a double out of 10, 0 being not food and 10 being food
     // this function sets the color of text, the content of text, and the seekbar percent
-    private void appropriateView(double foodness, SeekBar s, TextView t ){
+    private void appropriateView(float foodness, float notFoodness, SeekBar s, TextView t ){
         // useing just 3 colors for now
-        if (foodness < 3.5){
+        float f = foodness - notFoodness; // f is positive for food, negative for not food
+        float certainty = 1;
+        if (f < -1 * certainty ){
             t.setTextColor(Color.RED);
             t.setText("Not Food");
-            s.setProgress((int)foodness*10);
-        } else if (foodness>= 3.5 && foodness < 7.5){
+        } else if (f >= -1 * certainty && f <= certainty){
             t.setTextColor(Color.YELLOW);
             t.setText("Hard to Say");
-            s.setProgress((int)foodness*10);
-        } else {
+        } else if (f > certainty) {
             t.setTextColor(Color.GREEN);
             t.setText("Food!");
-            s.setProgress((int)foodness*10);
+        } else {
+            t.setText("Something went wrong...");
         }
+        float percent = (((f/3)*50)+50);
+        s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
     }
 
     public void helpListener(){
