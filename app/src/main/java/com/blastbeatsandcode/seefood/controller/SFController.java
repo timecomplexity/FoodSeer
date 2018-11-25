@@ -161,6 +161,10 @@ public class SFController {
      */
     private void update()
     {
+        if (_imagesFromServer.isEmpty()) {
+            // TODO: Get as many images as necessary to populate views
+            getSingleImage();
+        }
         for(SFView v : _views)
         {
             v.update(_imagesFromServer);

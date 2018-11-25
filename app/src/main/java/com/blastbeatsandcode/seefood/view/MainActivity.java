@@ -56,9 +56,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Register with the view
-        SFController.getInstance().registerView(this);
-
         // assign all view elements
 
         buttonHelp = (ImageButton)findViewById(R.id.buttonHelp);
@@ -79,6 +76,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
         // initialize
         initialize();
+
+        // Register with the view
+        SFController.getInstance().registerView(this);
     }
 
 
@@ -270,11 +270,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
     @Override
     public void update(ArrayList<SFImage> currentImageSet) {
         // Set the main image to the image at the end of the list
-        imageMainResult.setImageBitmap(currentImageSet.get(currentImageSet.size() - 1)
-                .getImageBitmap());
+        imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
 
         // Populate the rest of the images
-        for (int currentPos = currentImageSet.size() - 2; currentPos > 0; currentPos--) {
+        for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
             // TODO: Make this populate the rest of the image gallery
             //       This should already account for the first image in the set being put in main
             //       result.
