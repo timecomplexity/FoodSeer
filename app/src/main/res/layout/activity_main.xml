@@ -56,12 +56,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:enabled="false"
-                    android:maxHeight="30dp"
-                    android:minHeight="30dp"
+                    android:maxHeight="3dp"
+                    android:minHeight="3dp"
                     android:thumbTint="#ffffff"
                     android:backgroundTint="#ffffff"
                     android:progressBackgroundTint="#ffffff"
-                    android:progressTint="#ffffff"/>
+                    android:progressTint="#ffffff"
+                    android:progressDrawable="@drawable/custom_seekbar"/>
 
                 <TextView
                     android:id="@+id/textMainResult"

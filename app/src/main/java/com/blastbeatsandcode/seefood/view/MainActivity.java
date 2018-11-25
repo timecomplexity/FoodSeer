@@ -3,6 +3,7 @@ package com.blastbeatsandcode.seefood.view;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.Image;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
 import com.blastbeatsandcode.seefood.controller.ServerConn;
+import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.utils.FileUtils;
 import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
@@ -29,6 +31,7 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
@@ -71,14 +74,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // initialize
 
         initialize();
-      
-        Image[] gallery = new Image[10];
-        //TODO have this ^ come from somewhere else and be filled with
-        // the latest x (10) images excluding the most recent one
-        // also these might want to be an seeFoodImage objects which have data about foodness rather than just
-        // images so populating the gallery is easier :)
-        //populateGallery(gallery);
-        appropriateView(1, 1,seekbarMainResult,textMainResult ); //TODO remove later
+
+        // TODO: remove the below test case
+        appropriateView(1, 1,seekbarMainResult,textMainResult );
 
         // TODO: Update this so it doesn't crash the app when the server isn't running
         try {
@@ -94,22 +92,36 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void initialize(){ // a lot of this should probably be done by controller
         //TODO
         // set imageMainResult to first most recent image from db (or return now if theres none)
-            // imageMainResult.setImageResource(R.drawable.my_image); // have first image passed here
         // hide textNoneUploadedYet
         // based on main image, set seekbarMainResult and textMainResult
-            // appropriateView(get this somehow,seekbarMainResult,textMainResult );
-        // populate the gallery
+            // appropriateView(...);
+        // get 10 or 15 latest images from db into an arraylist
+        // populate the gallery with that arraylist
+
     }
 
-    private void populateGallery(ArrayList<Bitmap> gallery) {
+    private void populateGallery(ArrayList<SFImage> gallery) { //FIXME: this required importing SFImage from model. is that okay?
         int count = 0;
-        for (Bitmap i: gallery){ //for each image in gallery array
+        for (SFImage i: gallery){ //for each image in gallery array
             TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
-            ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(gallery.get(count));
-            ((TextView)row.findViewById(R.id.galleryText)).setText("test");
-            ((SeekBar)row.findViewById(R.id.gallerySeekbar)).setEnabled(false);
+
+            // boiler plate for converting android image to bitmap
+            ByteBuffer buffer = gallery.get(count).getImage().getPlanes()[0].getBuffer();
+            byte[] bytes = new byte[buffer.capacity()];
+            buffer.get(bytes);
+            Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+
+            ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
+
+            TextView t = ((TextView)row.findViewById(R.id.galleryText));
+            t.setText("this shouldnt be visible");
+
+            SeekBar s = ((SeekBar)row.findViewById(R.id.gallerySeekbar));
+            s.setEnabled(false);
+
             tableGallery.addView(row);
-            // TODO populate more based on object's attributes
+
+            appropriateView(gallery.get(count).getFoodConfidence(), gallery.get(count).getNotFoodConfidence(),s,t );
             count++;
         }
         // TODO add a button to view more
@@ -136,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         }
         float percent = (((f/3)*50)+50);
         s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
+        //s.setThumb()
     }
 
     public void helpListener(){
