@@ -63,13 +63,16 @@ public class SFController {
 
     // Return the images
     public void getBatchImages() {
-        // There's an off-by-one error or something here, so we have this
-        int currentTarget = _lastItem + 1;
-        for (int i = currentTarget; i > _lastItem - 9 && currentTarget >= 10; i--) {
-            // Consume one item from our current target list
-            currentTarget--;
+        int currentTarget = _lastItem;
+        // TODO: Change X in "_lastItem - X" to determine how many images to get (X currently 10)
+        // NOTE: DO NOT change the number after currentTarget!!! This is the lower bound for images
+        //   in the DB. Running below 10 here will (should) cause an error.
+        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
             // Retrieve image data from the DB
             SFImage img = _conn.getSFImage(currentTarget);
+
+            // Consume one item from our current target list
+            currentTarget--;
 
             // Add the image to the images from server array
             _imagesFromServer.add(img);
@@ -148,14 +151,19 @@ public class SFController {
         return result;
     }
 
+    public void registerView(SFView view) {
+        _views.add(view);
+        update();
+    }
+
     /*
      * Update the views
      */
-    public void update()
+    private void update()
     {
         for(SFView v : _views)
         {
-            v.update();
+            v.update(_imagesFromServer);
         }
     }
 }

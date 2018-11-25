@@ -32,6 +32,7 @@ import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
+import com.sun.jna.platform.win32.OaIdl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,6 +55,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Register with the view
+        SFController.getInstance().registerView(this);
 
         // assign all view elements
 
@@ -132,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 //        }
 
         // Get the last uploaded image from the server and set it to the last uploaded image
-        imageMainResult.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+        //imageMainResult.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
     }
 
     // TODO: Update this with real images
@@ -224,12 +228,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
                 String r = SFController.getInstance().sendImageToAI(path, "alex_test");
                 Messages.makeToast(getApplicationContext(), r);
-
-//                SFController c = SFController.getInstance();
-//                ArrayList<SFImage> t = c.getBatchImages();
-//                for (SFImage i : t) {
-//                    c.createImage(i.getImagePath(), i.getFileType());
-//                }
             }
 
             Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
@@ -248,14 +246,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
             System.out.println("ABSOLUTE PATH: " + absPath);
             String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
             Messages.makeToast(getApplicationContext(), r);
-            //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
-            //Messages.makeToast(getApplicationContext(), r);
-
-//            SFController c = SFController.getInstance();
-//            ArrayList<SFImage> t = c.getBatchImages();
-//            for (SFImage i : t) {
-//                c.createImage(i.getImagePath(), i.getFileType());
-//            }
         }
     }
 
@@ -278,8 +268,17 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
 
     @Override
-    public void update() {
-        // TODO: UPDATE THE VIEW
+    public void update(ArrayList<SFImage> currentImageSet) {
+        // Set the main image to the image at the end of the list
+        imageMainResult.setImageBitmap(currentImageSet.get(currentImageSet.size() - 1)
+                .getImageBitmap());
+
+        // Populate the rest of the images
+        for (int currentPos = currentImageSet.size() - 2; currentPos > 0; currentPos--) {
+            // TODO: Make this populate the rest of the image gallery
+            //       This should already account for the first image in the set being put in main
+            //       result.
+        }
     }
 
     @Override
