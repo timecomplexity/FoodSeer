@@ -17,6 +17,10 @@ android {
         }
     }
 
+    useLibrary 'org.apache.http.legacy'
+    // line above is required while running sdk 23 or higher because HttpClient was depreciated in 22
+    // https://stackoverflow.com/questions/32153318/httpclient-wont-import-in-android-studio
+
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
