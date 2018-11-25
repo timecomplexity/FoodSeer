@@ -130,32 +130,27 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     }
 
-    private void populateGallery(ArrayList<SFImage> gallery) { //FIXME: this required importing SFImage from model. is that okay?
-        int count = 0;
-        for (SFImage i: gallery){ //for each image in gallery array
-            TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
+    // puts 1 image into the gallery
+    private void populateGallery(SFImage image) { //FIXME: this required importing SFImage from model. is that okay?
+        TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
 
-            // boiler plate for converting android image to bitmap
-            ByteBuffer buffer = gallery.get(count).getImage().getPlanes()[0].getBuffer();
-            byte[] bytes = new byte[buffer.capacity()];
-            buffer.get(bytes);
-            Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+        // boiler plate for converting android image to bitmap
+        ByteBuffer buffer =image.getImage().getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.get(bytes);
+        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
 
-            ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
+        ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
 
-            TextView t = ((TextView)row.findViewById(R.id.galleryText));
-            t.setText("this shouldnt be visible");
+        TextView t = ((TextView)row.findViewById(R.id.galleryText));
+        t.setText("this shouldnt be visible");
 
-            SeekBar s = ((SeekBar)row.findViewById(R.id.gallerySeekbar));
-            s.setEnabled(false);
+        SeekBar s = ((SeekBar)row.findViewById(R.id.gallerySeekbar));
+        s.setEnabled(false);
 
-            tableGallery.addView(row);
+        tableGallery.addView(row);
 
-            appropriateView(gallery.get(count).getFoodConfidence(), gallery.get(count).getNotFoodConfidence(),s,t );
-            count++;
-        }
-        // TODO add a button to view more
-
+        appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(),s,t );
     }
 
     // this function sets the color of text, the content of text, and the seekbar percent
@@ -225,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     public void loadMore(){
         //TODO get like 10 or 15 more images from db into arraylist
-        // call populateGallery(arraylist)
+        // iterate through it and call call populateGallery(SFImage)
     }
 
     @Override
@@ -294,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void viewGallery() {
-
+        // i dont think this function has a use
     }
 
     @Override
@@ -312,9 +307,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
         // Populate the rest of the images
         for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
-            // TODO: Make this populate the rest of the image gallery
-            //       This should already account for the first image in the set being put in main
-            //       result.
+            populateGallery(currentImageSet.get(currentPos));
         }
     }
 
