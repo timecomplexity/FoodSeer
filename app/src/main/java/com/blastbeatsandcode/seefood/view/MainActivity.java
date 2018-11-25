@@ -4,17 +4,14 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Environment;
-import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +26,6 @@ import android.widget.TextView;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
-import com.blastbeatsandcode.seefood.controller.ServerConn;
 import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.utils.FileUtils;
 import com.blastbeatsandcode.seefood.utils.Messages;
@@ -38,7 +34,6 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 // Image Pick library used for camera: https://github.com/jrvansuita/PickImage
@@ -87,27 +82,27 @@ public class MainActivity extends AppCompatActivity implements SFView {
      * TESTING THE IMAGE VIEW
      *
      */
-    public void showImage() {
-        Dialog builder = new Dialog(this);
-        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        builder.getWindow().setBackgroundDrawable(
-                new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialogInterface) {
-                //nothing;
-            }
-        });
-
-        ImageView imageView = new ImageView(this);
-        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
-        System.out.println(b);
-        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
-        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        builder.show();
-    }
+//    public void showImage() {
+//        Dialog builder = new Dialog(this);
+//        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
+//        builder.getWindow().setBackgroundDrawable(
+//                new ColorDrawable(android.graphics.Color.TRANSPARENT));
+//        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//            @Override
+//            public void onDismiss(DialogInterface dialogInterface) {
+//                //nothing;
+//            }
+//        });
+//
+//        ImageView imageView = new ImageView(this);
+//        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
+//        System.out.println(b);
+//        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+//        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.MATCH_PARENT));
+//        builder.show();
+//    }
 
     public void initialize(){ // a lot of this should probably be done by controller
         //TODO
@@ -130,14 +125,14 @@ public class MainActivity extends AppCompatActivity implements SFView {
         populateGallery(gallery);
         appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
-        ArrayList<SFImage> t = SFController.getInstance().getImages();
-        for (SFImage i : t) {
-            SFController.getInstance().createImage(i.getImagePath(), i.getFileType());
-        }
+        // Run through, grab our images down
+//        ArrayList<SFImage> t = SFController.getInstance().getBatchImages();
+//        for (SFImage i : t) {
+//            SFController.getInstance().createImage(i.getImagePath(), i.getFileType());
+//        }
 
         // Get the last uploaded image from the server and set it to the last uploaded image
         imageMainResult.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
-        System.out.println("LAST IMAGE INFO: " + SFController.getInstance().getLastImage().getImagePath());
     }
 
     // TODO: Update this with real images
@@ -177,8 +172,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
             new View.OnClickListener() {
                 @Override public void onClick(View v) {
                     // Call the Display Help method
-                    //displayHelp();
-                    showImage();
+                    displayHelp();
                 }
             }
         );
@@ -231,11 +225,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 String r = SFController.getInstance().sendImageToAI(path, "alex_test");
                 Messages.makeToast(getApplicationContext(), r);
 
-                SFController c = SFController.getInstance();
-                ArrayList<SFImage> t = c.getImages();
-                for (SFImage i : t) {
-                    c.createImage(i.getImagePath(), i.getFileType());
-                }
+//                SFController c = SFController.getInstance();
+//                ArrayList<SFImage> t = c.getBatchImages();
+//                for (SFImage i : t) {
+//                    c.createImage(i.getImagePath(), i.getFileType());
+//                }
             }
 
             Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
@@ -257,11 +251,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
             //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
             //Messages.makeToast(getApplicationContext(), r);
 
-            SFController c = SFController.getInstance();
-            ArrayList<SFImage> t = c.getImages();
-            for (SFImage i : t) {
-                c.createImage(i.getImagePath(), i.getFileType());
-            }
+//            SFController c = SFController.getInstance();
+//            ArrayList<SFImage> t = c.getBatchImages();
+//            for (SFImage i : t) {
+//                c.createImage(i.getImagePath(), i.getFileType());
+//            }
         }
     }
 

@@ -158,22 +158,7 @@ public class ServerConn {
             e.printStackTrace();
         }
         currentLast = g.getCurrentLast();
-        System.out.println(currentLast);
         return currentLast;
-    }
-
-//    public String getImageBytes(String imagePath, String fileType) {
-//        ImageGetter s = new ImageGetter(imagePath, fileType);
-//        s.execute();
-//
-//        return s.result;
-//    }
-
-    public Bitmap getImageBytes(String imagePath, String fileType) {
-        ImageGetter s = new ImageGetter(imagePath, fileType);
-        s.execute();
-
-        return s.bitmap;
     }
 
 }
@@ -227,7 +212,6 @@ class Sender extends AsyncTask {
 class ImageGetter extends AsyncTask {
     private final String filePath;
     private final String fileType;
-    //public String result;
     public Bitmap bitmap;
 
     ImageGetter(String filePath, String fileType) {
@@ -334,6 +318,9 @@ class DBGetter extends AsyncTask {
                     "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306",
                     "root", "password");
             Statement stmt = con.createStatement();
+
+            // Create a sql statement depending on whether we want the index of the last image
+            //   or if we want to get the data related to some index
             String sql;
             if (forLast) {
                 // Find the last ID if we don't have it
@@ -343,6 +330,8 @@ class DBGetter extends AsyncTask {
                 // Get data from last ID object otherwise
                 sql = "SELECT * FROM image_data.image_data WHERE id=" + idToSearch;
             }
+
+            // Get our results
             ResultSet rs = stmt.executeQuery(sql);
 
             if (forLast) {
@@ -375,19 +364,14 @@ class DBGetter extends AsyncTask {
                     request.setEntity(entity.build());
                     Bitmap bmp = null;
 
-                    try {
-                        // Send off to server
-                        CloseableHttpResponse response = HttpClients.createDefault().execute(request);
+                    // Send off to server
+                    CloseableHttpResponse response = HttpClients.createDefault().execute(request);
 
-                        // Give back the server response (confidence levels)
-                        InputStream input = response.getEntity().getContent();
+                    // Give back the server response (confidence levels)
+                    InputStream input = response.getEntity().getContent();
 
-                        // Create an image from the inputstream
-                        bmp = BitmapFactory.decodeStream(input);
-                    } catch (IOException e) {
-                        // If we're here, everything is broken
-                        e.printStackTrace();
-                    }
+                    // Create an image from the input stream
+                    bmp = BitmapFactory.decodeStream(input);
 
                     sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath, bmp);
                 }

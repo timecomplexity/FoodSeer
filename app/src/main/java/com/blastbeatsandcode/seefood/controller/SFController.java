@@ -1,16 +1,11 @@
 package com.blastbeatsandcode.seefood.controller;
 
 
-import android.widget.Toast;
-
 import com.blastbeatsandcode.seefood.model.SFImage;
-import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.view.SFView;
 
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Queue;
 
 /*
  * SFController is the controller for the SeeFood app.
@@ -67,27 +62,25 @@ public class SFController {
     }
 
     // Return the images
-    public ArrayList<SFImage> getImages() {
+    public void getBatchImages() {
         // There's an off-by-one error or something here, so we have this
         int currentTarget = _lastItem + 1;
-        ArrayList<SFImage> result = new ArrayList<>();
         for (int i = currentTarget; i > _lastItem - 9 && currentTarget >= 10; i--) {
             // Consume one item from our current target list
             currentTarget--;
             // Retrieve image data from the DB
-            SFImage img = _conn.getSFImage((currentTarget));
+            SFImage img = _conn.getSFImage(currentTarget);
 
-            // Add the image to the result array and to the images from server array
-            result.add(img);
+            // Add the image to the images from server array
             _imagesFromServer.add(img);
         }
-
-        for (int i = 0; i < _imagesFromServer.size(); i++)
-            System.out.println("IMAGE INFORMATION: " + _imagesFromServer.get(i).getImagePath());
-
-        return result;
     }
 
+    public void getSingleImage() {
+        // Retrieve image data from the DB
+        SFImage img = _conn.getSFImage(_lastItem);
+        _imagesFromServer.add(img);
+    }
 
     /*
      * Return the last image from the server
@@ -95,13 +88,12 @@ public class SFController {
     public SFImage getLastImage() {
         if (_imagesFromServer.size() <= 0)
         {
-            getImages();
+            getSingleImage();
         }
 
-        return _imagesFromServer.get(0);
+        // Last image should be last thing in the array list
+        return _imagesFromServer.get(_imagesFromServer.size() - 1);
     }
-
-
 
     /*
      * Add image to the list to upload
@@ -155,34 +147,6 @@ public class SFController {
 
         return result;
     }
-
-    public void createImage(String path, String fileType) {
-        _conn.getImageBytes(path, fileType);
-    }
-//
-//    public SFImage getImageFromServer() {
-//        return new SFImage(new Image());
-//    }
-
-
-    /*
-     * Add the model to the controller
-     * */
-    /* TODO: Do we need this???
-    public void registerModel(SFModel model)
-    {
-        _m = model;
-    } */
-
-    /*
-     * Add view to views collection
-     */
-    /* TODO: Do we need this?
-    public void registerView(SFView v)
-    {
-        _views.add(v);
-    }
-    */
 
     /*
      * Update the views
