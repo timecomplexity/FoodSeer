@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 """
 This code is the SeeFood AI wrapper, exposing API calls over
 the network so that we can call the SeeFood AI on the remote
@@ -28,7 +30,6 @@ app = Flask(__name__)
 # This is a sort of pseudo-class... Poss re-add later
 # class SeeFoodAI:
     
-# This is the only call that is actually exposed over web
 # Also note this code is heavily inspired by Dr. Derek Doran's
 #   find_food.py example
 @app.route("/api/ai-decision", methods=['POST'])
@@ -37,7 +38,7 @@ def get_ai_decision():
     file_name = "/home/ubuntu/seefood/images/" + datetime.now().strftime("%Y%m%d%H%M%S")
     image_number = 1
     while isfile(file_name):
-        file_name += image_number
+        file_name += str(image_number)
         image_number += 1
         
     # Save off the file in our images database
@@ -45,7 +46,6 @@ def get_ai_decision():
         out.write(request.files.get("image").read())
         
     # Create a tensor from the image
-    # TODO: See if we still want to resize in utils, or if this works
     image = Image.open(file_name).convert('RGB')
     image = image.resize((227, 227), Image.BILINEAR)
     img_tensor = [np.asarray(image, dtype=np.float32)]
@@ -55,6 +55,15 @@ def get_ai_decision():
     
     # Return the result   
     return file_name + "," + str(scores[0][0]) + "," + str(scores[0][1])
+    
+# Allows us to get an image back down from the DB
+@app.route("/api/get-image", methods=["POST"])
+def get_image():
+    # Pull file name from the request object
+    filepath = request.form.get("filepath")
+    
+    # Return the file object
+    return open(filepath, 'r').read()
     
 def _extract_food_confidence():
     pass

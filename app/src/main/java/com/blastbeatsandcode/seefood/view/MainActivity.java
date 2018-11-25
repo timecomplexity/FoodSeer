@@ -1,19 +1,25 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -21,12 +27,13 @@ import android.widget.TextView;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
-import com.blastbeatsandcode.seefood.controller.ServerConn;
+import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.utils.FileUtils;
 import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
+import com.sun.jna.platform.win32.OaIdl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -69,27 +76,38 @@ public class MainActivity extends AppCompatActivity implements SFView {
         uploadListener();
 
         // initialize
-
         initialize();
-      
-        Image[] gallery = new Image[10];
-        //TODO have this ^ come from somewhere else and be filled with
-        // the latest x (10) images excluding the most recent one
-        // also these might want to be an seeFoodImage objects which have data about foodness rather than just
-        // images so populating the gallery is easier :)
-        //populateGallery(gallery);
-        appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
 
-        // TODO: Update this so it doesn't crash the app when the server isn't running
-        try {
-            ServerConn sc = new ServerConn();
-            System.out.println("before");
-            sc.retrieveFromDB();
-            System.out.println("after");
-        } catch (Exception e) {
-            Messages.makeToast(getApplicationContext(), "Server is not running!");
-        }
+        // Register with the view
+        SFController.getInstance().registerView(this);
     }
+
+
+    /**
+     * TESTING THE IMAGE VIEW
+     *
+     */
+//    public void showImage() {
+//        Dialog builder = new Dialog(this);
+//        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
+//        builder.getWindow().setBackgroundDrawable(
+//                new ColorDrawable(android.graphics.Color.TRANSPARENT));
+//        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//            @Override
+//            public void onDismiss(DialogInterface dialogInterface) {
+//                //nothing;
+//            }
+//        });
+//
+//        ImageView imageView = new ImageView(this);
+//        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
+//        System.out.println(b);
+//        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+//        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.MATCH_PARENT));
+//        builder.show();
+//    }
 
     public void initialize(){ // a lot of this should probably be done by controller
         //TODO
@@ -99,11 +117,32 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // based on main image, set seekbarMainResult and textMainResult
             // appropriateView(get this somehow,seekbarMainResult,textMainResult );
         // populate the gallery
+
+
+
+
+        // TODO: FIX THIS
+        Image[] gallery = new Image[10];
+        //TODO have this ^ come from somewhere else and be filled with
+        // the latest x (10) images excluding the most recent one
+        // also these might want to be an seeFoodImage objects which have data about foodness rather than just
+        // images so populating the gallery is easier :)
+        populateGallery(gallery);
+        appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
+
+        // Run through, grab our images down
+//        ArrayList<SFImage> t = SFController.getInstance().getBatchImages();
+//        for (SFImage i : t) {
+//            SFController.getInstance().createImage(i.getImagePath(), i.getFileType());
+//        }
+
+        // Get the last uploaded image from the server and set it to the last uploaded image
+        //imageMainResult.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
     }
 
-    private void populateGallery(ArrayList<Bitmap> gallery) {
-        int count = 0;
-        for (Bitmap i: gallery){ //for each image in gallery array
+    // TODO: Update this with real images
+    private void populateGallery(Image[] gallery) {
+        for (Image i: gallery){ //for each image in gallery array
             TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
             ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(gallery.get(count));
             ((TextView)row.findViewById(R.id.galleryText)).setText("test");
@@ -209,13 +248,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
                 SFController.getInstance().addImageToUpload(imageFile);
 
-
-                /* UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
-
                 String r = SFController.getInstance().sendImageToAI(path, "alex_test");
                 Messages.makeToast(getApplicationContext(), r);
-
-                */
             }
 
             Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
@@ -234,8 +268,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
             System.out.println("ABSOLUTE PATH: " + absPath);
             String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
             Messages.makeToast(getApplicationContext(), r);
-            //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
-            //Messages.makeToast(getApplicationContext(), r);
         }
     }
 
@@ -253,7 +285,35 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
 
     @Override
-    public void update() {
-        // TODO: UPDATE THE VIEW
+    public void update(ArrayList<SFImage> currentImageSet) {
+        // Set the main image to the image at the end of the list
+        imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
+
+        // Populate the rest of the images
+        for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
+            // TODO: Make this populate the rest of the image gallery
+            //       This should already account for the first image in the set being put in main
+            //       result.
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
+
+        // Get the files in the directory
+        File rootPath = Environment.getExternalStorageDirectory();
+        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
+        File[] listOfFiles = folder.listFiles();
+
+        // Delete all the images in the folder
+        for (File f : listOfFiles) {
+            f.delete();
+        }
+
+        // Delete the folder (so it never even happened)
+        folder.delete();
     }
 }

@@ -1,15 +1,11 @@
 package com.blastbeatsandcode.seefood.controller;
 
 
-import android.widget.Toast;
-
 import com.blastbeatsandcode.seefood.model.SFImage;
-import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.view.SFView;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Queue;
 
 /*
  * SFController is the controller for the SeeFood app.
@@ -27,13 +23,16 @@ public class SFController {
     private ArrayList<File> _selectedImages;
 
     // Collection of the images from the server
-    private Queue<SFImage> _imagesFromServer;
+    private ArrayList<SFImage> _imagesFromServer;
 
     // Connection to the server object
     private ServerConn _conn = new ServerConn();
 
     // Instance of the SFController
     private static SFController instance = null;
+
+    // Hold the last item currently in the DB
+    private int _lastItem = -1;
 
     // TODO: Do we need this???
     // Hold a reference to the SFModel
@@ -48,6 +47,8 @@ public class SFController {
     {
         _views = new ArrayList<SFView>();
         _selectedImages = new ArrayList<File>();
+        _imagesFromServer = new ArrayList<SFImage>();
+        _lastItem = _conn.retrieveLastDBItemId();
     }
 
     // Only create a new instance of the SF controller if it does not already exist.
@@ -61,11 +62,40 @@ public class SFController {
     }
 
     // Return the images
-    public Queue<SFImage> getImages() {
-        // TODO: Update images
-        _imagesFromServer = _conn.getAllImages();
+    public void getBatchImages() {
+        int currentTarget = _lastItem;
+        // TODO: Change X in "_lastItem - X" to determine how many images to get (X currently 10)
+        // NOTE: DO NOT change the number after currentTarget!!! This is the lower bound for images
+        //   in the DB. Running below 10 here will (should) cause an error.
+        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
+            // Retrieve image data from the DB
+            SFImage img = _conn.getSFImage(currentTarget);
 
-        return _imagesFromServer;
+            // Consume one item from our current target list
+            currentTarget--;
+
+            // Add the image to the images from server array
+            _imagesFromServer.add(img);
+        }
+    }
+
+    public void getSingleImage() {
+        // Retrieve image data from the DB
+        SFImage img = _conn.getSFImage(_lastItem);
+        _imagesFromServer.add(img);
+    }
+
+    /*
+     * Return the last image from the server
+     */
+    public SFImage getLastImage() {
+        if (_imagesFromServer.size() <= 0)
+        {
+            getSingleImage();
+        }
+
+        // Last image should be last thing in the array list
+        return _imagesFromServer.get(_imagesFromServer.size() - 1);
     }
 
     /*
@@ -98,7 +128,6 @@ public class SFController {
             imagePath = imagePath.replace("/storage/emulated/0", "");
         }
 
-
         // Get the result of the AI processing
         String result = _conn.uploadImage(imagePath, sender);
         try {
@@ -116,41 +145,29 @@ public class SFController {
             System.out.println("Response not received...");
         }
 
+        // Update our current last DB item
+        _lastItem = _conn.retrieveLastDBItemId();
+
         return result;
     }
-//
-//    public SFImage getImageFromServer() {
-//        return new SFImage(new Image());
-//    }
 
-
-    /*
-     * Add the model to the controller
-     * */
-    /* TODO: Do we need this???
-    public void registerModel(SFModel model)
-    {
-        _m = model;
-    } */
-
-    /*
-     * Add view to views collection
-     */
-    /* TODO: Do we need this?
-    public void registerView(SFView v)
-    {
-        _views.add(v);
+    public void registerView(SFView view) {
+        _views.add(view);
+        update();
     }
-    */
 
     /*
      * Update the views
      */
-    public void update()
+    private void update()
     {
+        if (_imagesFromServer.isEmpty()) {
+            // TODO: Get as many images as necessary to populate views
+            getSingleImage();
+        }
         for(SFView v : _views)
         {
-            v.update();
+            v.update(_imagesFromServer);
         }
     }
 }
