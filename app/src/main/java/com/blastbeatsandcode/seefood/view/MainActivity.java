@@ -1,20 +1,27 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -22,13 +29,13 @@ import android.widget.TextView;
 
 import com.blastbeatsandcode.seefood.R;
 import com.blastbeatsandcode.seefood.controller.SFController;
-import com.blastbeatsandcode.seefood.controller.ServerConn;
 import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.utils.FileUtils;
 import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
+import com.sun.jna.platform.win32.OaIdl;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -47,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static SeekBar seekbarMainResult;
     private static TextView textMainResult;
     private static TableLayout tableGallery;
+    private static Button buttonLoadMore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,30 +72,51 @@ public class MainActivity extends AppCompatActivity implements SFView {
         seekbarMainResult.setEnabled(false); // make the seekbar frozen
         textMainResult = (TextView)findViewById(R.id.textMainResult);
         tableGallery = (TableLayout)findViewById(R.id.tableGallery);
+        buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
 
         // start all listeners
 
         helpListener();
         cameraListener();
         uploadListener();
+        loadMoreListener();
 
         // initialize
-
         initialize();
 
         // TODO: remove the below test case
         appropriateView(1, 1,seekbarMainResult,textMainResult );
 
-        // TODO: Update this so it doesn't crash the app when the server isn't running
-        try {
-            ServerConn sc = new ServerConn();
-            System.out.println("before");
-            sc.retrieveFromDB();
-            System.out.println("after");
-        } catch (Exception e) {
-            Messages.makeToast(getApplicationContext(), "Server is not running!");
-        }
+        // Register with the view
+        SFController.getInstance().registerView(this);
     }
+
+
+    /**
+     * TESTING THE IMAGE VIEW
+     *
+     */
+//    public void showImage() {
+//        Dialog builder = new Dialog(this);
+//        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
+//        builder.getWindow().setBackgroundDrawable(
+//                new ColorDrawable(android.graphics.Color.TRANSPARENT));
+//        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+//            @Override
+//            public void onDismiss(DialogInterface dialogInterface) {
+//                //nothing;
+//            }
+//        });
+//
+//        ImageView imageView = new ImageView(this);
+//        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
+//        System.out.println(b);
+//        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
+//        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.MATCH_PARENT));
+//        builder.show();
+//    }
 
     public void initialize(){ // a lot of this should probably be done by controller
         //TODO
@@ -95,7 +124,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // hide textNoneUploadedYet
         // based on main image, set seekbarMainResult and textMainResult
             // appropriateView(...);
-        // get 10 or 15 latest images from db into an arraylist
+        // get 10 or 15 latest images from db into an arraylist excluding most recent because it is in the main image
+        // might need a way to keep track of how many images have been pulled
         // populate the gallery with that arraylist
 
     }
@@ -128,7 +158,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     }
 
-    // for now, foodness is a double out of 10, 0 being not food and 10 being food
     // this function sets the color of text, the content of text, and the seekbar percent
     private void appropriateView(float foodness, float notFoodness, SeekBar s, TextView t ){
         // useing just 3 colors for now
@@ -148,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
         }
         float percent = (((f/3)*50)+50);
         s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
-        //s.setThumb()
     }
 
     public void helpListener(){
@@ -182,6 +210,22 @@ public class MainActivity extends AppCompatActivity implements SFView {
                     }
                 }
         );
+    }
+
+    public void loadMoreListener(){
+        buttonLoadMore.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        // Call the Upload Image method
+                        loadMore();
+                    }
+                }
+        );
+    }
+
+    public void loadMore(){
+        //TODO get like 10 or 15 more images from db into arraylist
+        // call populateGallery(arraylist)
     }
 
     @Override
@@ -225,13 +269,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
                 SFController.getInstance().addImageToUpload(imageFile);
 
-
-                /* UNCOMMENT THIS TO TEST SENDING TO THE AI ////////////////////////////////
-
                 String r = SFController.getInstance().sendImageToAI(path, "alex_test");
                 Messages.makeToast(getApplicationContext(), r);
-
-                */
             }
 
             Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
@@ -250,8 +289,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
             System.out.println("ABSOLUTE PATH: " + absPath);
             String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
             Messages.makeToast(getApplicationContext(), r);
-            //String r = SFController.getInstance().sendImageToAI(imageFile.getAbsolutePath(), "alex_test");
-            //Messages.makeToast(getApplicationContext(), r);
         }
     }
 
@@ -269,7 +306,35 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
 
     @Override
-    public void update() {
-        // TODO: UPDATE THE VIEW
+    public void update(ArrayList<SFImage> currentImageSet) {
+        // Set the main image to the image at the end of the list
+        imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
+
+        // Populate the rest of the images
+        for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
+            // TODO: Make this populate the rest of the image gallery
+            //       This should already account for the first image in the set being put in main
+            //       result.
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
+
+        // Get the files in the directory
+        File rootPath = Environment.getExternalStorageDirectory();
+        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
+        File[] listOfFiles = folder.listFiles();
+
+        // Delete all the images in the folder
+        for (File f : listOfFiles) {
+            f.delete();
+        }
+
+        // Delete the folder (so it never even happened)
+        folder.delete();
     }
 }

@@ -80,6 +80,12 @@
 
                 </TableLayout>
 
+                <Button
+                    android:id="@+id/buttonLoadMore"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Load more" />
+
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

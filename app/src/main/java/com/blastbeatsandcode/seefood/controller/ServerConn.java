@@ -1,19 +1,23 @@
 package com.blastbeatsandcode.seefood.controller;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 
 import com.blastbeatsandcode.seefood.model.SFImage;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
@@ -25,7 +29,6 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.io.entity.StringEntity;
 
 /*
  * The ServerConn class handles the connection between the SeeFood app
@@ -37,6 +40,7 @@ public class ServerConn {
     private byte[] _request;              // Data to send with a request
     private String _connInfo;             // String containing connection info to server
     private CloseableHttpClient _client;  // Holds the actual connection object
+    static int currentLast = -1;
 
     public ServerConn() {
         _client = HttpClients.createDefault();
@@ -47,6 +51,30 @@ public class ServerConn {
         Queue<SFImage> images = new LinkedList<SFImage>();
 
         return images;
+    }
+
+    public String getImageData(int currentTarget) {
+        DBGetter g = new DBGetter(false, currentTarget);
+        g.execute();
+        try {
+            g.get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return g.getResult();
+    }
+
+    public SFImage getSFImage(int currentTarget) {
+        DBGetter g = new DBGetter(false, currentTarget);
+        g.execute();
+        try {
+            g.get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return g.getSfi();
     }
 
     /*
@@ -74,13 +102,6 @@ public class ServerConn {
         _request = data;
     }
 
-    /*
-     * Connect to the server
-     */
-    private boolean connectToServer() {
-        // TODO: Implement this, return whether we are connected or not
-        return false;
-    }
 
     /**
      * Upload single image for AI decision
@@ -126,8 +147,8 @@ public class ServerConn {
         s.execute();
     }
 
-    public void retrieveFromDB() {
-        DBGetter g = new DBGetter();
+    public int retrieveLastDBItemId() {
+        DBGetter g = new DBGetter(true);
         g.execute();
         try {
             g.get();
@@ -136,11 +157,15 @@ public class ServerConn {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(g.out);
+        currentLast = g.getCurrentLast();
+        return currentLast;
     }
 
 }
 
+/*
+ * Sender sends requests to the server
+ */
 class Sender extends AsyncTask {
     private final String filePath;
     private final String sender;
@@ -179,6 +204,50 @@ class Sender extends AsyncTask {
             return null;
         } catch (IOException | ParseException e) {
             // If we're here, everything is broken
+            return null;
+        }
+    }
+}
+
+class ImageGetter extends AsyncTask {
+    private final String filePath;
+    private final String fileType;
+    public Bitmap bitmap;
+
+    ImageGetter(String filePath, String fileType) {
+        this.filePath = filePath;
+        this.fileType = fileType;
+    }
+
+    @Override
+    protected Object doInBackground(Object[] objects) {
+        HttpPost request = new HttpPost(
+                "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/get-image");
+
+        // Create an entity to send over POST
+        MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+        entity.setCharset(Charset.defaultCharset());
+
+        // Add the filepath
+        entity.addTextBody("filepath", filePath);
+
+        // Set up the above entity to send
+        request.setEntity(entity.build());
+
+        try {
+            // Send off to server
+            CloseableHttpResponse response = HttpClients.createDefault().execute(request);
+
+            // Give back the server response (confidence levels)
+            InputStream input = response.getEntity().getContent();
+
+            // Create an image from the inputstream
+            bitmap = BitmapFactory.decodeStream(input);
+
+            return null;
+        } catch (IOException e) {
+            // If we're here, everything is broken
+            e.printStackTrace();
             return null;
         }
     }
@@ -225,10 +294,23 @@ class DBSender extends AsyncTask {
 
 
 class DBGetter extends AsyncTask {
-    public String out = "";
+    private String result = "";
+    private boolean forLast;
+    private int idToSearch;
+    private int currentLast;
+    private SFImage sfi;
+
+    DBGetter(boolean forLast) {
+        this.forLast = forLast;
+    }
+
+    DBGetter(boolean forLast, int idToSearch) {
+        this.forLast = forLast;
+        this.idToSearch = idToSearch;
+    }
+
     @Override
     protected Object doInBackground(Object[] objects) {
-
 
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -236,21 +318,81 @@ class DBGetter extends AsyncTask {
                     "jdbc:mysql://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:3306",
                     "root", "password");
             Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM image_data.image_data WHERE id=" +
-                    "(SELECT MAX(id) FROM image_data.image_data)");
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
 
-            while (rs.next()) {
-                for (int i = 1; i < columnsNumber; i++)
-                    out += rs.getString(i) + " ";
-                out += "\n";
+            // Create a sql statement depending on whether we want the index of the last image
+            //   or if we want to get the data related to some index
+            String sql;
+            if (forLast) {
+                // Find the last ID if we don't have it
+                sql = "SELECT id FROM image_data.image_data WHERE id=" +
+                        "(SELECT MAX(id) FROM image_data.image_data)";
+            } else {
+                // Get data from last ID object otherwise
+                sql = "SELECT * FROM image_data.image_data WHERE id=" + idToSearch;
             }
-            con.close();
+
+            // Get our results
+            ResultSet rs = stmt.executeQuery(sql);
+
+            if (forLast) {
+                // Set the current last item number
+                rs.next();
+                currentLast = rs.getInt(1);
+            } else {
+                // Get all the data out of the DB query otherwise
+                while (rs.next()) {
+                    String imagePath = rs.getString(1);
+                    float foodConf = rs.getFloat(2);
+                    float notFoodConf = rs.getFloat(3);
+                    String fileType = rs.getString(4);
+                    String sender = rs.getString(5);
+                    result = imagePath + " " + foodConf + " " + notFoodConf + " " + fileType + " "
+                             + sender;
+
+                    // Get the bitmap information
+                    HttpPost request = new HttpPost(
+                            "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/get-image");
+
+                    // Create an entity to send over POST
+                    MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+                    entity.setCharset(Charset.defaultCharset());
+
+                    // Add the filepath
+                    entity.addTextBody("filepath", imagePath);
+
+                    // Set up the above entity to send
+                    request.setEntity(entity.build());
+                    Bitmap bmp = null;
+
+                    // Send off to server
+                    CloseableHttpResponse response = HttpClients.createDefault().execute(request);
+
+                    // Give back the server response (confidence levels)
+                    InputStream input = response.getEntity().getContent();
+
+                    // Create an image from the input stream
+                    bmp = BitmapFactory.decodeStream(input);
+
+                    sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath, bmp);
+                }
+                con.close();
+            }
+
             return null;
         } catch (Exception e) {
             System.out.println(e);
             return null;
         }
+
+    }
+
+    public int getCurrentLast() {
+        return currentLast;
+    }
+
+    public SFImage getSfi() { return sfi; }
+
+    public String getResult() {
+        return result;
     }
 }
