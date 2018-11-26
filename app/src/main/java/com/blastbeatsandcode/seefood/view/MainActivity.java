@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
@@ -17,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -36,6 +38,7 @@ import com.darsh.multipleimageselect.helpers.Constants;
 import com.sun.jna.platform.win32.OaIdl;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
@@ -51,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static SeekBar seekbarMainResult;
     private static TextView textMainResult;
     private static TableLayout tableGallery;
+    private static Button buttonLoadMore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,15 +72,20 @@ public class MainActivity extends AppCompatActivity implements SFView {
         seekbarMainResult.setEnabled(false); // make the seekbar frozen
         textMainResult = (TextView)findViewById(R.id.textMainResult);
         tableGallery = (TableLayout)findViewById(R.id.tableGallery);
+        buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
 
         // start all listeners
 
         helpListener();
         cameraListener();
         uploadListener();
+        loadMoreListener();
 
         // initialize
         initialize();
+
+        // TODO: remove the below test case
+        appropriateView(1, 1,seekbarMainResult,textMainResult );
 
         // Register with the view
         SFController.getInstance().registerView(this);
@@ -112,66 +121,57 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void initialize(){ // a lot of this should probably be done by controller
         //TODO
         // set imageMainResult to first most recent image from db (or return now if theres none)
-            // imageMainResult.setImageResource(R.drawable.my_image); // have first image passed here
         // hide textNoneUploadedYet
         // based on main image, set seekbarMainResult and textMainResult
-            // appropriateView(get this somehow,seekbarMainResult,textMainResult );
-        // populate the gallery
-
-
-
-
-        // TODO: FIX THIS
-        Image[] gallery = new Image[10];
-        //TODO have this ^ come from somewhere else and be filled with
-        // the latest x (10) images excluding the most recent one
-        // also these might want to be an seeFoodImage objects which have data about foodness rather than just
-        // images so populating the gallery is easier :)
-        populateGallery(gallery);
-        appropriateView(5,seekbarMainResult,textMainResult ); //TODO remove later
-
-        // Run through, grab our images down
-//        ArrayList<SFImage> t = SFController.getInstance().getBatchImages();
-//        for (SFImage i : t) {
-//            SFController.getInstance().createImage(i.getImagePath(), i.getFileType());
-//        }
-
-        // Get the last uploaded image from the server and set it to the last uploaded image
-        //imageMainResult.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
-    }
-
-    // TODO: Update this with real images
-    private void populateGallery(Image[] gallery) {
-        for (Image i: gallery){ //for each image in gallery array
-            TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
-            ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(gallery.get(count));
-            ((TextView)row.findViewById(R.id.galleryText)).setText("test");
-            ((SeekBar)row.findViewById(R.id.gallerySeekbar)).setEnabled(false);
-            tableGallery.addView(row);
-            // TODO populate more based on object's attributes
-            count++;
-        }
-        // TODO add a button to view more
+            // appropriateView(...);
+        // get 10 or 15 latest images from db into an arraylist excluding most recent because it is in the main image
+        // might need a way to keep track of how many images have been pulled
+        // populate the gallery with that arraylist
 
     }
 
-    // for now, foodness is a double out of 10, 0 being not food and 10 being food
+    // puts 1 image into the gallery
+    private void populateGallery(SFImage image) { //FIXME: this required importing SFImage from model. is that okay?
+        TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
+
+        // boiler plate for converting android image to bitmap
+        ByteBuffer buffer =image.getImage().getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.get(bytes);
+        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+
+        ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
+
+        TextView t = ((TextView)row.findViewById(R.id.galleryText));
+        t.setText("this shouldnt be visible");
+
+        SeekBar s = ((SeekBar)row.findViewById(R.id.gallerySeekbar));
+        s.setEnabled(false);
+
+        tableGallery.addView(row);
+
+        appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(),s,t );
+    }
+
     // this function sets the color of text, the content of text, and the seekbar percent
-    private void appropriateView(double foodness, SeekBar s, TextView t ){
+    private void appropriateView(float foodness, float notFoodness, SeekBar s, TextView t ){
         // useing just 3 colors for now
-        if (foodness < 3.5){
+        float f = foodness - notFoodness; // f is positive for food, negative for not food
+        float certainty = 1;
+        if (f < -1 * certainty ){
             t.setTextColor(Color.RED);
             t.setText("Not Food");
-            s.setProgress((int)foodness*10);
-        } else if (foodness>= 3.5 && foodness < 7.5){
+        } else if (f >= -1 * certainty && f <= certainty){
             t.setTextColor(Color.YELLOW);
             t.setText("Hard to Say");
-            s.setProgress((int)foodness*10);
-        } else {
+        } else if (f > certainty) {
             t.setTextColor(Color.GREEN);
             t.setText("Food!");
-            s.setProgress((int)foodness*10);
+        } else {
+            t.setText("Something went wrong...");
         }
+        float percent = (((f/3)*50)+50);
+        s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
     }
 
     public void helpListener(){
@@ -205,6 +205,22 @@ public class MainActivity extends AppCompatActivity implements SFView {
                     }
                 }
         );
+    }
+
+    public void loadMoreListener(){
+        buttonLoadMore.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        // Call the Upload Image method
+                        loadMore();
+                    }
+                }
+        );
+    }
+
+    public void loadMore(){
+        //TODO get like 10 or 15 more images from db into arraylist
+        // iterate through it and call call populateGallery(SFImage)
     }
 
     @Override
@@ -273,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void viewGallery() {
-
+        // i dont think this function has a use
     }
 
     @Override
@@ -291,9 +307,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
         // Populate the rest of the images
         for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
-            // TODO: Make this populate the rest of the image gallery
-            //       This should already account for the first image in the set being put in main
-            //       result.
+            populateGallery(currentImageSet.get(currentPos));
         }
     }
 

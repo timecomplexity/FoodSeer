@@ -17,5 +17,8 @@
         android:id="@+id/gallerySeekbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:enabled="false" />
+        android:enabled="false"
+        android:maxHeight="3dp"
+        android:minHeight="3dp"
+        android:thumbTint="#ffffff"/>
 </TableRow>
