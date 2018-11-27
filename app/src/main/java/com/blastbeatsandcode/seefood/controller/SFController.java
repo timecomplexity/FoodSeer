@@ -76,6 +76,7 @@ public class SFController {
 
             // Add the image to the images from server array
             _imagesFromServer.add(img);
+            System.out.println("IMAGE PATH: " + img.getImagePath());
         }
     }
 
@@ -96,6 +97,10 @@ public class SFController {
 
         // Last image should be last thing in the array list
         return _imagesFromServer.get(_imagesFromServer.size() - 1);
+    }
+
+    public ArrayList<SFImage> getCurrentImageSet() {
+        return _imagesFromServer;
     }
 
     /*
@@ -167,7 +172,7 @@ public class SFController {
         }
         for(SFView v : _views)
         {
-            v.update(_imagesFromServer);
+            v.update();
         }
     }
 }

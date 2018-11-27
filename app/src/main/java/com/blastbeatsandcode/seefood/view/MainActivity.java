@@ -115,27 +115,34 @@ public class MainActivity extends AppCompatActivity implements SFView {
 //        builder.show();
 //    }
 
-    // puts 1 image into the gallery
-    private void populateGallery(SFImage image) { //FIXME: this required importing SFImage from model. is that okay?
+    /*
+     * Puts an image into the gallery
+     */
+    private void populateGallery(SFImage image) {
         TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
 
         // boiler plate for converting android image to bitmap
-        ByteBuffer buffer =image.getImage().getPlanes()[0].getBuffer();
-        byte[] bytes = new byte[buffer.capacity()];
-        buffer.get(bytes);
-        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+        try {
+            ByteBuffer buffer = image.getImage().getPlanes()[0].getBuffer();
+            byte[] bytes = new byte[buffer.capacity()];
+            buffer.get(bytes);
+            Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
 
-        ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
+            ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
 
-        TextView t = ((TextView)row.findViewById(R.id.galleryText));
-        t.setText("this shouldnt be visible");
+            TextView t = ((TextView) row.findViewById(R.id.galleryText));
+            t.setText("this shouldnt be visible");
 
-        SeekBar s = ((SeekBar)row.findViewById(R.id.gallerySeekbar));
-        s.setEnabled(false);
+            SeekBar s = ((SeekBar) row.findViewById(R.id.gallerySeekbar));
+            s.setEnabled(false);
 
-        tableGallery.addView(row);
+            tableGallery.addView(row);
 
-        appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(),s,t );
+            appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(), s, t);
+        } catch (Exception e) {
+            System.out.println("Could not process image!");
+            System.out.println(e);
+        }
     }
 
     // this function sets the color of text, the content of text, and the seekbar percent
@@ -206,6 +213,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void loadMore(){
         //TODO get like 10 or 15 more images from db into arraylist
         // iterate through it and call call populateGallery(SFImage)
+        SFController.getInstance().getBatchImages();
+        update();
     }
 
     @Override
@@ -286,14 +295,19 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
 
     @Override
-    public void update(ArrayList<SFImage> currentImageSet) {
+    public void update() {
+        ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         // Set the main image to the image at the end of the list
-        imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
+        if (currentImageSet.size() > 0)
+            imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
 
-        if (SFController.getInstance().getLastImage() != null)
+        // Hide the message telling the user no images have been uploaded if there is an image
+        if (SFController.getInstance().getLastImage() != null) {
             textMainImageCoverup.setVisibility(View.GONE);
-        else
+        } else {
             textMainImageCoverup.setVisibility(View.VISIBLE);
+            SFController.getInstance().getBatchImages();
+        }
 
         // Populate the rest of the images
         for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
