@@ -81,9 +81,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
         uploadListener();
         loadMoreListener();
 
-        // initialize
-        initialize();
-
         // TODO: remove the below test case
         appropriateView(1, 1,seekbarMainResult,textMainResult );
 
@@ -117,18 +114,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
 //                ViewGroup.LayoutParams.MATCH_PARENT));
 //        builder.show();
 //    }
-
-    public void initialize(){ // a lot of this should probably be done by controller
-        //TODO
-        // set imageMainResult to first most recent image from db (or return now if theres none)
-        // hide textNoneUploadedYet
-        // based on main image, set seekbarMainResult and textMainResult
-            // appropriateView(...);
-        // get 10 or 15 latest images from db into an arraylist excluding most recent because it is in the main image
-        // might need a way to keep track of how many images have been pulled
-        // populate the gallery with that arraylist
-
-    }
 
     // puts 1 image into the gallery
     private void populateGallery(SFImage image) { //FIXME: this required importing SFImage from model. is that okay?
@@ -304,6 +289,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void update(ArrayList<SFImage> currentImageSet) {
         // Set the main image to the image at the end of the list
         imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
+
+        if (SFController.getInstance().getLastImage() != null)
+            textMainImageCoverup.setVisibility(View.GONE);
+        else
+            textMainImageCoverup.setVisibility(View.VISIBLE);
 
         // Populate the rest of the images
         for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
