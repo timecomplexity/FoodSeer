@@ -1,27 +1,19 @@
 package com.blastbeatsandcode.seefood.view;
 
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.media.Image;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -35,10 +27,8 @@ import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
-import com.sun.jna.platform.win32.OaIdl;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
@@ -86,43 +76,17 @@ public class MainActivity extends AppCompatActivity implements SFView {
         SFController.getInstance().registerView(this);
     }
 
-
-    /**
-     * TESTING THE IMAGE VIEW
-     *
-     */
-//    public void showImage() {
-//        Dialog builder = new Dialog(this);
-//        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
-//        builder.getWindow().setBackgroundDrawable(
-//                new ColorDrawable(android.graphics.Color.TRANSPARENT));
-//        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-//            @Override
-//            public void onDismiss(DialogInterface dialogInterface) {
-//                //nothing;
-//            }
-//        });
-//
-//        ImageView imageView = new ImageView(this);
-//        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
-//        System.out.println(b);
-//        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
-//        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
-//                ViewGroup.LayoutParams.MATCH_PARENT,
-//                ViewGroup.LayoutParams.MATCH_PARENT));
-//        builder.show();
-//    }
-
     /*
      * Puts an image into the gallery
      */
     private void populateGallery(SFImage image) {
         TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
 
-        // boiler plate for converting android image to bitmap
         try {
+            // Add image from DB
             ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
 
+            // Add in food/not food graphics
             TextView t = ((TextView) row.findViewById(R.id.galleryText));
             t.setText("this shouldnt be visible");
 
@@ -307,24 +271,4 @@ public class MainActivity extends AppCompatActivity implements SFView {
             populateGallery(currentImageSet.get(currentPos));
         }
     }
-
-//    @Override
-//    protected void onDestroy() {
-//        super.onDestroy();
-//
-//        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
-//
-//        // Get the files in the directory
-//        File rootPath = Environment.getExternalStorageDirectory();
-//        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
-//        File[] listOfFiles = folder.listFiles();
-//
-//        // Delete all the images in the folder
-//        for (File f : listOfFiles) {
-//            f.delete();
-//        }
-//
-//        // Delete the folder (so it never even happened)
-//        folder.delete();
-//    }
 }
