@@ -43,8 +43,6 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
-    public static final int REQUEST_CODE_FOR_IMAGE_SELECTION = 0;
-    public static final int REQUEST_CODE_FOR_CAMERA = 1;
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
     private static ImageButton buttonCamera;
@@ -123,12 +121,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
         // boiler plate for converting android image to bitmap
         try {
-            ByteBuffer buffer = image.getImage().getPlanes()[0].getBuffer();
-            byte[] bytes = new byte[buffer.capacity()];
-            buffer.get(bytes);
-            Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-
-            ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
+            ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
 
             TextView t = ((TextView) row.findViewById(R.id.galleryText));
             t.setText("this shouldnt be visible");
@@ -315,23 +308,23 @@ public class MainActivity extends AppCompatActivity implements SFView {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
-
-        // Get the files in the directory
-        File rootPath = Environment.getExternalStorageDirectory();
-        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
-        File[] listOfFiles = folder.listFiles();
-
-        // Delete all the images in the folder
-        for (File f : listOfFiles) {
-            f.delete();
-        }
-
-        // Delete the folder (so it never even happened)
-        folder.delete();
-    }
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//
+//        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
+//
+//        // Get the files in the directory
+//        File rootPath = Environment.getExternalStorageDirectory();
+//        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
+//        File[] listOfFiles = folder.listFiles();
+//
+//        // Delete all the images in the folder
+//        for (File f : listOfFiles) {
+//            f.delete();
+//        }
+//
+//        // Delete the folder (so it never even happened)
+//        folder.delete();
+//    }
 }

@@ -78,6 +78,9 @@ public class SFController {
             _imagesFromServer.add(img);
             System.out.println("IMAGE PATH: " + img.getImagePath());
         }
+
+        // Update last item to remember where we left off
+        _lastItem = currentTarget;
     }
 
     public void getSingleImage() {
