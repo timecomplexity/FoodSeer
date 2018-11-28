@@ -87,10 +87,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
             ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
 
             // Add in food/not food graphics
-            TextView t = ((TextView) row.findViewById(R.id.galleryText));
+            TextView t = row.findViewById(R.id.galleryText);
             t.setText("this shouldnt be visible");
 
-            SeekBar s = ((SeekBar) row.findViewById(R.id.gallerySeekbar));
+            SeekBar s = row.findViewById(R.id.gallerySeekbar);
             s.setEnabled(false);
 
             tableGallery.addView(row);
