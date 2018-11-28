@@ -44,6 +44,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static TableLayout tableGallery;
     private static Button buttonLoadMore;
 
+    // To track which images we've loaded into the app...
+    private int positionFactor = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -267,8 +270,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
         }
 
         // Populate the rest of the images
-        for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
+        for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {
             populateGallery(currentImageSet.get(currentPos));
         }
+
+        // Move past the first 10 items in list
+        positionFactor += 10;
     }
 }

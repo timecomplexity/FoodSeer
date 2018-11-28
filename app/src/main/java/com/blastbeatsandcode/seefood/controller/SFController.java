@@ -87,6 +87,9 @@ public class SFController {
         // Retrieve image data from the DB
         SFImage img = _conn.getSFImage(_lastItem);
         _imagesFromServer.add(img);
+
+        // Move last item back down one (consume the image)
+        _lastItem--;
     }
 
     /*
