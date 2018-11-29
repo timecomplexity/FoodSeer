@@ -67,6 +67,7 @@ public class SFController {
         // TODO: Change X in "_lastItem - X" to determine how many images to get (X currently 10)
         // NOTE: DO NOT change the number after currentTarget!!! This is the lower bound for images
         //   in the DB. Running below 10 here will (should) cause an error.
+        int[] targets = new int[10];
         for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
             // Retrieve image data from the DB
             SFImage img = _conn.getSFImage(currentTarget);
@@ -78,6 +79,17 @@ public class SFController {
             _imagesFromServer.add(img);
             System.out.println("IMAGE PATH: " + img.getImagePath());
         }
+
+//        // Get an array of targets to hit
+//        for (int i = 0; i < 10 && currentTarget >= 10; i++) {
+//            targets[i] = currentTarget--;
+//        }
+//
+//        // Get our batch images
+//        SFImage[] images = _conn.getSFImageBatch(targets);
+//        for (SFImage image : images) {
+//            _imagesFromServer.add(image);
+//        }
 
         // Update last item to remember where we left off
         _lastItem = currentTarget;
