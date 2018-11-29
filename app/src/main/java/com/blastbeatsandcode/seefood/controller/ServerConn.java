@@ -8,6 +8,8 @@ import android.os.Environment;
 
 import com.blastbeatsandcode.seefood.model.SFImage;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,25 +48,6 @@ public class ServerConn {
         _client = HttpClients.createDefault();
     }
 
-    public Queue<SFImage> getAllImages() {
-        // TODO: Implement this by grabbing all of the images from the server
-        Queue<SFImage> images = new LinkedList<SFImage>();
-
-        return images;
-    }
-
-    public String getImageData(int currentTarget) {
-        DBGetter g = new DBGetter(false, currentTarget);
-        g.execute();
-        try {
-            g.get();
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return g.getResult();
-    }
-
     public SFImage getSFImage(int currentTarget) {
         DBGetter g = new DBGetter(false, currentTarget);
         g.execute();
@@ -77,22 +60,27 @@ public class ServerConn {
         return g.getSfi();
     }
 
-    /*
-     * Send a request from passed in string
-     * // TODO: Should we remove this as it is a security problem?
-     */
-    public String sendRequest(byte[] data) {
-        // TODO: Implement this by sending a request to the server
-        return "Sent request";
-    }
+    public SFImage[] getSFImageBatch(int[] currentTarget) {
+        // Create array of DB Getters to run in parallel
+        DBGetter[] getters = new DBGetter[currentTarget.length];
+        for (int i = 0; i < currentTarget.length; i++) {
+            getters[i] = new DBGetter(false, currentTarget[i]);
+            getters[i].execute();
+        }
 
-    /*
-     * Send the saved request
-     */
-    public String sendRequest() {
-        // TODO: Implement this by ssending a request, but this time make sure it
-        // is the request set in _request, it's more safe
-        return "Sent member variable value of request";
+        // Block on each of the getters, return an array consisting of all SFIs
+        SFImage[] images = new SFImage[currentTarget.length];
+        for (int i = 0; i < getters.length; i++) {
+            try {
+                getters[i].get();
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            images[i] = getters[i].getSfi();
+        }
+
+        return images;
     }
 
     /*
@@ -152,9 +140,7 @@ public class ServerConn {
         g.execute();
         try {
             g.get();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
         currentLast = g.getCurrentLast();
@@ -204,50 +190,6 @@ class Sender extends AsyncTask {
             return null;
         } catch (IOException | ParseException e) {
             // If we're here, everything is broken
-            return null;
-        }
-    }
-}
-
-class ImageGetter extends AsyncTask {
-    private final String filePath;
-    private final String fileType;
-    public Bitmap bitmap;
-
-    ImageGetter(String filePath, String fileType) {
-        this.filePath = filePath;
-        this.fileType = fileType;
-    }
-
-    @Override
-    protected Object doInBackground(Object[] objects) {
-        HttpPost request = new HttpPost(
-                "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/get-image");
-
-        // Create an entity to send over POST
-        MultipartEntityBuilder entity = MultipartEntityBuilder.create();
-        entity.setCharset(Charset.defaultCharset());
-
-        // Add the filepath
-        entity.addTextBody("filepath", filePath);
-
-        // Set up the above entity to send
-        request.setEntity(entity.build());
-
-        try {
-            // Send off to server
-            CloseableHttpResponse response = HttpClients.createDefault().execute(request);
-
-            // Give back the server response (confidence levels)
-            InputStream input = response.getEntity().getContent();
-
-            // Create an image from the inputstream
-            bitmap = BitmapFactory.decodeStream(input);
-
-            return null;
-        } catch (IOException e) {
-            // If we're here, everything is broken
-            e.printStackTrace();
             return null;
         }
     }
@@ -369,9 +311,36 @@ class DBGetter extends AsyncTask {
 
                     // Give back the server response (confidence levels)
                     InputStream input = response.getEntity().getContent();
+//                    System.out.println(input);
+//                    System.out.println(response.getEntity().getContent());
+
+                    // Hold on to our InputStream to use more than once
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = input.read(buffer)) > -1 ) {
+                        baos.write(buffer, 0, len);
+                    }
+                    baos.flush();
+
+                    // Duplicate ISs
+                    InputStream is1 = new ByteArrayInputStream(baos.toByteArray());
+                    InputStream is2 = new ByteArrayInputStream(baos.toByteArray());
+
+                    ///// For this, see https://developer.android.com/topic/performance/graphics/load-bitmap /////
+                    // First decode with inJustDecodeBounds=true to check dimensions
+                    final BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeStream(is1, null, options);
+
+                    // Calculate inSampleSize
+                    options.inSampleSize = calculateInSampleSize(options, 300, 300);
 
                     // Create an image from the input stream
-                    bmp = BitmapFactory.decodeStream(input);
+                    options.inJustDecodeBounds = false;
+                    bmp = BitmapFactory.decodeStream(is2, null, options);
+
+                    ///// End block of awesomeness /////
 
                     sfi = new SFImage(foodConf, notFoodConf, sender, fileType, imagePath, bmp);
                 }
@@ -384,6 +353,31 @@ class DBGetter extends AsyncTask {
             return null;
         }
 
+    }
+
+    // Really cool downsampling code
+    // See https://developer.android.com/topic/performance/graphics/load-bitmap
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) >= reqHeight
+                    && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
     }
 
     public int getCurrentLast() {

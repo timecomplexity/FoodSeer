@@ -67,6 +67,7 @@ public class SFController {
         // TODO: Change X in "_lastItem - X" to determine how many images to get (X currently 10)
         // NOTE: DO NOT change the number after currentTarget!!! This is the lower bound for images
         //   in the DB. Running below 10 here will (should) cause an error.
+        int[] targets = new int[10];
         for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
             // Retrieve image data from the DB
             SFImage img = _conn.getSFImage(currentTarget);
@@ -76,13 +77,31 @@ public class SFController {
 
             // Add the image to the images from server array
             _imagesFromServer.add(img);
+            System.out.println("IMAGE PATH: " + img.getImagePath());
         }
+
+//        // Get an array of targets to hit
+//        for (int i = 0; i < 10 && currentTarget >= 10; i++) {
+//            targets[i] = currentTarget--;
+//        }
+//
+//        // Get our batch images
+//        SFImage[] images = _conn.getSFImageBatch(targets);
+//        for (SFImage image : images) {
+//            _imagesFromServer.add(image);
+//        }
+
+        // Update last item to remember where we left off
+        _lastItem = currentTarget;
     }
 
     public void getSingleImage() {
         // Retrieve image data from the DB
         SFImage img = _conn.getSFImage(_lastItem);
         _imagesFromServer.add(img);
+
+        // Move last item back down one (consume the image)
+        _lastItem--;
     }
 
     /*
@@ -96,6 +115,10 @@ public class SFController {
 
         // Last image should be last thing in the array list
         return _imagesFromServer.get(_imagesFromServer.size() - 1);
+    }
+
+    public ArrayList<SFImage> getCurrentImageSet() {
+        return _imagesFromServer;
     }
 
     /*
@@ -167,7 +190,7 @@ public class SFController {
         }
         for(SFView v : _views)
         {
-            v.update(_imagesFromServer);
+            v.update();
         }
     }
 }

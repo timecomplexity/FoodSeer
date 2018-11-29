@@ -12,5 +12,5 @@ public interface SFView {
     void viewGallery();
     void displayHelp();
     void takePicture();
-    void update(ArrayList<SFImage> images);
+    void update();
 }

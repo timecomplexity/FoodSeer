@@ -1,27 +1,21 @@
 package com.blastbeatsandcode.seefood.view;
 
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.media.Image;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -35,16 +29,13 @@ import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.utils.SFConstants;
 import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
-import com.sun.jna.platform.win32.OaIdl;
 
 import java.io.File;
-import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
-    public static final int REQUEST_CODE_FOR_IMAGE_SELECTION = 0;
-    public static final int REQUEST_CODE_FOR_CAMERA = 1;
     // view elements in order of position top to bottom
     private static ImageButton buttonHelp;
     private static ImageButton buttonCamera;
@@ -55,6 +46,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static TextView textMainResult;
     private static TableLayout tableGallery;
     private static Button buttonLoadMore;
+
+    // To track which images we've loaded into the app...
+    private int positionFactor = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,54 +82,30 @@ public class MainActivity extends AppCompatActivity implements SFView {
         SFController.getInstance().registerView(this);
     }
 
-
-    /**
-     * TESTING THE IMAGE VIEW
-     *
+    /*
+     * Puts an image into the gallery
      */
-//    public void showImage() {
-//        Dialog builder = new Dialog(this);
-//        builder.requestWindowFeature(Window.FEATURE_NO_TITLE);
-//        builder.getWindow().setBackgroundDrawable(
-//                new ColorDrawable(android.graphics.Color.TRANSPARENT));
-//        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-//            @Override
-//            public void onDismiss(DialogInterface dialogInterface) {
-//                //nothing;
-//            }
-//        });
-//
-//        ImageView imageView = new ImageView(this);
-//        Bitmap b = SFController.getInstance().getLastImage().getImageBitmap();
-//        System.out.println(b);
-//        //imageView.setImageBitmap(SFController.getInstance().getLastImage().getImageBitmap());
-//        builder.addContentView(imageView, new RelativeLayout.LayoutParams(
-//                ViewGroup.LayoutParams.MATCH_PARENT,
-//                ViewGroup.LayoutParams.MATCH_PARENT));
-//        builder.show();
-//    }
-
-    // puts 1 image into the gallery
-    private void populateGallery(SFImage image) { //FIXME: this required importing SFImage from model. is that okay?
+    private void populateGallery(SFImage image) {
         TableRow row = (TableRow)LayoutInflater.from(MainActivity.this).inflate(R.layout.attrib_row, null);
 
-        // boiler plate for converting android image to bitmap
-        ByteBuffer buffer =image.getImage().getPlanes()[0].getBuffer();
-        byte[] bytes = new byte[buffer.capacity()];
-        buffer.get(bytes);
-        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+        try {
+            // Add image from DB
+            ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
 
-        ((ImageView)row.findViewById(R.id.galleryImage)).setImageBitmap(bitmapImage);
+            // Add in food/not food graphics
+            TextView t = row.findViewById(R.id.galleryText);
+            t.setText("this shouldnt be visible");
 
-        TextView t = ((TextView)row.findViewById(R.id.galleryText));
-        t.setText("this shouldnt be visible");
+            SeekBar s = row.findViewById(R.id.gallerySeekbar);
+            s.setEnabled(false);
 
-        SeekBar s = ((SeekBar)row.findViewById(R.id.gallerySeekbar));
-        s.setEnabled(false);
+            tableGallery.addView(row);
 
-        tableGallery.addView(row);
-
-        appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(),s,t );
+            appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(), s, t);
+        } catch (Exception e) {
+            System.out.println("Could not process image!");
+            System.out.println(e);
+        }
     }
 
     // this function sets the color of text, the content of text, and the seekbar percent
@@ -206,6 +176,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void loadMore(){
         //TODO get like 10 or 15 more images from db into arraylist
         // iterate through it and call call populateGallery(SFImage)
+        SFController.getInstance().getBatchImages();
+        update();
     }
 
     @Override
@@ -286,38 +258,29 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
 
     @Override
-    public void update(ArrayList<SFImage> currentImageSet) {
+    public void update() {
+        ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         // Set the main image to the image at the end of the list
-        imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
+        if (currentImageSet.size() > 0)
+            imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
 
-        if (SFController.getInstance().getLastImage() != null)
+        // Hide the message telling the user no images have been uploaded if there is an image
+        if (SFController.getInstance().getLastImage() != null) {
             textMainImageCoverup.setVisibility(View.GONE);
-        else
+        } else {
             textMainImageCoverup.setVisibility(View.VISIBLE);
+            SFController.getInstance().getBatchImages();
+        }
 
+        System.out.println(currentImageSet.size());
         // Populate the rest of the images
-        for (int currentPos = 1; currentPos < currentImageSet.size() - 1; currentPos++) {
+        for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {
             populateGallery(currentImageSet.get(currentPos));
         }
-    }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
+        // Move past the first 10 items in list
+        if (currentImageSet.size() != 1)
+            positionFactor += 10;
 
-        // WE NEED TO DELETE OUR TEMP PHOTO CACHE UPON EXIT //
-
-        // Get the files in the directory
-        File rootPath = Environment.getExternalStorageDirectory();
-        File folder = new File(rootPath + "/DCIM/seefoodtemp/");
-        File[] listOfFiles = folder.listFiles();
-
-        // Delete all the images in the folder
-        for (File f : listOfFiles) {
-            f.delete();
-        }
-
-        // Delete the folder (so it never even happened)
-        folder.delete();
     }
 }
