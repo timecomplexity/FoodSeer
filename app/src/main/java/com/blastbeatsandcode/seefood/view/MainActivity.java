@@ -41,14 +41,15 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static ImageButton buttonCamera;
     private static ImageButton buttonUpload;
     private static ImageView imageMainResult;
-    private static TextView textMainImageCoverup;
     private static SeekBar seekbarMainResult;
     private static TextView textMainResult;
     private static TableLayout tableGallery;
+    private static TableLayout tableGallery2;
     private static Button buttonLoadMore;
 
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
+    private boolean addToLeftTableNext = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,11 +62,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
         buttonCamera = (ImageButton)findViewById(R.id.buttonCamera);
         buttonUpload = (ImageButton)findViewById(R.id.buttonUpload);
         imageMainResult = (ImageView)findViewById(R.id.imageMainResult);
-        textMainImageCoverup = (TextView)findViewById(R.id.textMainImageCoverup);
         seekbarMainResult = (SeekBar)findViewById(R.id.seekbarMainResult);
         seekbarMainResult.setEnabled(false); // make the seekbar frozen
         textMainResult = (TextView)findViewById(R.id.textMainResult);
         tableGallery = (TableLayout)findViewById(R.id.tableGallery);
+        tableGallery2 = (TableLayout)findViewById(R.id.tableGallery2);
         buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
 
         // start all listeners
@@ -87,7 +88,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
         try {
             // Add image from DB
-            ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
+
+            try{
+                ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
+            } catch (Exception e) { //FIXME: it hits this a lot!!! WHYYYYYYYY!!!!!!!!!!!!???????????????
+                System.out.println("IMAGE WAS NULL!!!!!!!!");
+                System.out.println(e);
+            }
 
             // Add in food/not food graphics
             TextView t = row.findViewById(R.id.galleryText);
@@ -98,7 +105,17 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
             appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(), s, t);
 
-            tableGallery.addView(row);
+            if (addToLeftTableNext){
+                tableGallery.addView(row);
+                addToLeftTableNext =false;
+                System.out.println("added to left. do it again?"  + addToLeftTableNext);
+            } else {
+                tableGallery2.addView(row);
+                addToLeftTableNext =true;
+                System.out.println("added to right. add lefft next? " + addToLeftTableNext);
+            }
+
+
         } catch (Exception e) {
             System.out.println("Could not process image!");
             System.out.println(e);
@@ -122,12 +139,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         } else {
             t.setText("Something went wrong...");
         }
-        System.out.println("food " + foodness);
-        System.out.println("not food " + notFoodness);
-        System.out.println("sum " +f);
         float percent = (((f/3)*50)+50);
         System.out.println("percent" + percent);
-        System.out.println("rouded " + Math.round(percent));
         s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
     }
 
@@ -263,17 +276,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet(); // set of images downloaded so far
         if (currentImageSet.size() > 0 )
             // set last image (most recent image) in this array list as main image and update main values
+            imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
             appropriateView(currentImageSet.get(0).getFoodConfidence(), currentImageSet.get(0).getNotFoodConfidence(), seekbarMainResult, textMainResult);
 
-        // Hide the message telling the user no images have been uploaded if there is an image
-        if (SFController.getInstance().getLastImage() != null) {
-            textMainImageCoverup.setVisibility(View.GONE);
-        } else {
-            textMainImageCoverup.setVisibility(View.VISIBLE);
-            SFController.getInstance().getBatchImages();
-        }
 
-        System.out.println(currentImageSet.size());
         // Populate the rest of the images
         for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {
             populateGallery(currentImageSet.get(currentPos));

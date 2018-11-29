@@ -42,14 +42,6 @@
                         android:layout_height="match_parent"
                         app:srcCompat="@color/colorPrimary" />
 
-                    <TextView
-                        android:id="@+id/textMainImageCoverup"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="No image uploaded yet, click the camera or the upload button to get started!"
-                        android:textSize="24sp" />
-
                 </FrameLayout>
 
                 <SeekBar
@@ -74,12 +66,40 @@
                     android:textSize="32dp"
                     android:textStyle="bold" />
 
-                <TableLayout
-                    android:id="@+id/tableGallery"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
 
-                </TableLayout>
+                    <TableLayout
+                        android:id="@+id/tableGallery"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+
+                        <TableRow
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                        </TableRow>
+
+                    </TableLayout>
+
+                    <TableLayout
+                        android:id="@+id/tableGallery2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+
+                        <TableRow
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                        </TableRow>
+
+                    </TableLayout>
+
+                </LinearLayout>
 
                 <Button
                     android:id="@+id/buttonLoadMore"

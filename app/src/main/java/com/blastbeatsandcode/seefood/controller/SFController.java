@@ -77,7 +77,7 @@ public class SFController {
 
             // Add the image to the images from server array
             _imagesFromServer.add(img);
-            System.out.println("IMAGE PATH: " + img.getImagePath());
+            System.out.println("LOADED IMAGE " + i );//+ img.getImagePath());
         }
 
 //        // Get an array of targets to hit
