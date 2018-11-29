@@ -46,25 +46,6 @@ public class ServerConn {
         _client = HttpClients.createDefault();
     }
 
-    public Queue<SFImage> getAllImages() {
-        // TODO: Implement this by grabbing all of the images from the server
-        Queue<SFImage> images = new LinkedList<SFImage>();
-
-        return images;
-    }
-
-    public String getImageData(int currentTarget) {
-        DBGetter g = new DBGetter(false, currentTarget);
-        g.execute();
-        try {
-            g.get();
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return g.getResult();
-    }
-
     public SFImage getSFImage(int currentTarget) {
         DBGetter g = new DBGetter(false, currentTarget);
         g.execute();
@@ -75,24 +56,6 @@ public class ServerConn {
         }
 
         return g.getSfi();
-    }
-
-    /*
-     * Send a request from passed in string
-     * // TODO: Should we remove this as it is a security problem?
-     */
-    public String sendRequest(byte[] data) {
-        // TODO: Implement this by sending a request to the server
-        return "Sent request";
-    }
-
-    /*
-     * Send the saved request
-     */
-    public String sendRequest() {
-        // TODO: Implement this by ssending a request, but this time make sure it
-        // is the request set in _request, it's more safe
-        return "Sent member variable value of request";
     }
 
     /*
@@ -204,50 +167,6 @@ class Sender extends AsyncTask {
             return null;
         } catch (IOException | ParseException e) {
             // If we're here, everything is broken
-            return null;
-        }
-    }
-}
-
-class ImageGetter extends AsyncTask {
-    private final String filePath;
-    private final String fileType;
-    public Bitmap bitmap;
-
-    ImageGetter(String filePath, String fileType) {
-        this.filePath = filePath;
-        this.fileType = fileType;
-    }
-
-    @Override
-    protected Object doInBackground(Object[] objects) {
-        HttpPost request = new HttpPost(
-                "http://ec2-18-224-86-76.us-east-2.compute.amazonaws.com:5000/api/get-image");
-
-        // Create an entity to send over POST
-        MultipartEntityBuilder entity = MultipartEntityBuilder.create();
-        entity.setCharset(Charset.defaultCharset());
-
-        // Add the filepath
-        entity.addTextBody("filepath", filePath);
-
-        // Set up the above entity to send
-        request.setEntity(entity.build());
-
-        try {
-            // Send off to server
-            CloseableHttpResponse response = HttpClients.createDefault().execute(request);
-
-            // Give back the server response (confidence levels)
-            InputStream input = response.getEntity().getContent();
-
-            // Create an image from the inputstream
-            bitmap = BitmapFactory.decodeStream(input);
-
-            return null;
-        } catch (IOException e) {
-            // If we're here, everything is broken
-            e.printStackTrace();
             return null;
         }
     }
