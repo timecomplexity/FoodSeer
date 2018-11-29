@@ -5,12 +5,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -29,6 +31,7 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
@@ -269,12 +272,15 @@ public class MainActivity extends AppCompatActivity implements SFView {
             SFController.getInstance().getBatchImages();
         }
 
+        System.out.println(currentImageSet.size());
         // Populate the rest of the images
         for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {
             populateGallery(currentImageSet.get(currentPos));
         }
 
         // Move past the first 10 items in list
-        positionFactor += 10;
+        if (currentImageSet.size() != 1)
+            positionFactor += 10;
+
     }
 }
