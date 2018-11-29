@@ -75,9 +75,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
         uploadListener();
         loadMoreListener();
 
-        // TODO: remove the below test case
-        appropriateView(1, 1,seekbarMainResult,textMainResult );
-
         // Register with the view
         SFController.getInstance().registerView(this);
     }
@@ -99,9 +96,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
             SeekBar s = row.findViewById(R.id.gallerySeekbar);
             s.setEnabled(false);
 
-            tableGallery.addView(row);
-
             appropriateView(image.getFoodConfidence(), image.getNotFoodConfidence(), s, t);
+
+            tableGallery.addView(row);
         } catch (Exception e) {
             System.out.println("Could not process image!");
             System.out.println(e);
@@ -125,7 +122,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
         } else {
             t.setText("Something went wrong...");
         }
+        System.out.println("food " + foodness);
+        System.out.println("not food " + notFoodness);
+        System.out.println("sum " +f);
         float percent = (((f/3)*50)+50);
+        System.out.println("percent" + percent);
+        System.out.println("rouded " + Math.round(percent));
         s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
     }
 
@@ -174,8 +176,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
     }
 
     public void loadMore(){
-        //TODO get like 10 or 15 more images from db into arraylist
-        // iterate through it and call call populateGallery(SFImage)
         SFController.getInstance().getBatchImages();
         update();
     }
@@ -257,12 +257,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
     }
 
 
+    // this method is run on start and after clicking load more
     @Override
     public void update() {
-        ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
-        // Set the main image to the image at the end of the list
-        if (currentImageSet.size() > 0)
-            imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
+        ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet(); // set of images downloaded so far
+        if (currentImageSet.size() > 0 )
+            // set last image (most recent image) in this array list as main image and update main values
+            appropriateView(currentImageSet.get(0).getFoodConfidence(), currentImageSet.get(0).getNotFoodConfidence(), seekbarMainResult, textMainResult);
 
         // Hide the message telling the user no images have been uploaded if there is an image
         if (SFController.getInstance().getLastImage() != null) {
