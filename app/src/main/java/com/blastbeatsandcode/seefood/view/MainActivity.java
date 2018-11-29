@@ -1,5 +1,6 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -16,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static TextView textMainResult;
     private static TableLayout tableGallery;
     private static Button buttonLoadMore;
+    private static ProgressBar spinner;
 
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
@@ -67,6 +70,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         textMainResult = (TextView)findViewById(R.id.textMainResult);
         tableGallery = (TableLayout)findViewById(R.id.tableGallery);
         buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
+        spinner = (ProgressBar)findViewById(R.id.progressBar);
+
+        // Hide spinner
+        spinner.setVisibility(View.GONE);
 
         // start all listeners
 
@@ -166,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         buttonLoadMore.setOnClickListener(
                 new View.OnClickListener() {
                     @Override public void onClick(View v) {
+                        //spinner.setVisibility(View.VISIBLE);
                         // Call the Upload Image method
                         loadMore();
                     }
@@ -176,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void loadMore(){
         //TODO get like 10 or 15 more images from db into arraylist
         // iterate through it and call call populateGallery(SFImage)
+
         SFController.getInstance().getBatchImages();
         update();
     }
@@ -259,6 +268,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     @Override
     public void update() {
+        spinner.setVisibility(View.VISIBLE);
         ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         // Set the main image to the image at the end of the list
         if (currentImageSet.size() > 0)
@@ -281,6 +291,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // Move past the first 10 items in list
         if (currentImageSet.size() != 1)
             positionFactor += 10;
+
+        spinner.setVisibility(View.GONE);
 
     }
 }
