@@ -297,6 +297,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
         if (currentImageSetSize == currentImageSet.size()){
             Messages.makeToast(this, "Out of images!");
+            spinner.setVisibility(View.GONE);
             return;
         }
         currentImageSetSize = currentImageSet.size();
@@ -304,14 +305,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // Set the main image to the image at the end of the list
         if (currentImageSet.size() > 0)
             imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
-            appropriateView(currentImageSet.get(0).getFoodConfidence(), currentImageSet.get(0).getNotFoodConfidence(), seekbarMainResult, textMainResult);
+        appropriateView(currentImageSet.get(0).getFoodConfidence(), currentImageSet.get(0).getNotFoodConfidence(), seekbarMainResult, textMainResult);
 
 
         // Populate the rest of the images
-        System.out.println(positionFactor);
         for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {
             populateGallery(currentImageSet.get(currentPos));
-
         }
 
         // Move past the first 10 items in list
