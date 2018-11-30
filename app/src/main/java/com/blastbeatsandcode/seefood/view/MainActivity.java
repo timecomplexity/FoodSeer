@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static TableLayout tableGallery;
     private static TableLayout tableGallery2;
     private static Button buttonLoadMore;
+    private static ProgressBar spinner;
 
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
@@ -69,6 +71,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         tableGallery = (TableLayout)findViewById(R.id.tableGallery);
         tableGallery2 = (TableLayout)findViewById(R.id.tableGallery2);
         buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
+        spinner = (ProgressBar)findViewById(R.id.progressBar);
+
+        // Hide the spinner to start with
+        spinner.setVisibility(View.GONE);
 
         // start all listeners
 
@@ -190,6 +196,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     }
 
     public void loadMore(){
+        spinner.setVisibility(View.VISIBLE);
         SFController.getInstance().getBatchImages();
     }
 
@@ -273,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     // this method is run on start and after clicking load more
     @Override
     public void update() {
-
+        spinner.setVisibility(View.VISIBLE);
         // Get our image set
         ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         if (currentImageSetSize > currentImageSet.size()) {
@@ -303,6 +310,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // Move past the first 10 items in list
         if (currentImageSet.size() != 1)
             positionFactor += 10;
+
+        spinner.setVisibility(View.GONE);
     }
 }
 
