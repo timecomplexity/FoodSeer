@@ -62,6 +62,7 @@ public class ServerConn {
 
     public SFImage[] getSFImageBatch(int[] currentTarget) {
         // Create array of DB Getters to run in parallel
+        System.out.println("conn");
         DBGetter[] getters = new DBGetter[currentTarget.length];
         for (int i = 0; i < currentTarget.length; i++) {
             getters[i] = new DBGetter(false, currentTarget[i]);
@@ -253,7 +254,6 @@ class DBGetter extends AsyncTask {
 
     @Override
     protected Object doInBackground(Object[] objects) {
-
         try {
             Class.forName("com.mysql.jdbc.Driver");
             Connection con = DriverManager.getConnection(

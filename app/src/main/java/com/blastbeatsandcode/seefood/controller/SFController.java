@@ -1,6 +1,8 @@
 package com.blastbeatsandcode.seefood.controller;
 
 
+import android.os.AsyncTask;
+
 import com.blastbeatsandcode.seefood.model.SFImage;
 import com.blastbeatsandcode.seefood.view.SFView;
 
@@ -63,42 +65,55 @@ public class SFController {
 
     // Return the images
     public void getBatchImages() {
-        int currentTarget = _lastItem;
-        // TODO: Change X in "_lastItem - X" to determine how many images to get (X currently 10)
-        // NOTE: DO NOT change the number after currentTarget!!! This is the lower bound for images
-        //   in the DB. Running below 10 here will (should) cause an error.
-        int[] targets = new int[10];
-        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
-            // Retrieve image data from the DB
-            SFImage img = _conn.getSFImage(currentTarget);
+        final int currentTarget = _lastItem;
 
-            // Consume one item from our current target list
-            currentTarget--;
-
-            // Add the image to the images from server array
-            _imagesFromServer.add(img);
-            System.out.println("IMAGE PATH: " + img.getImagePath());
-        }
-
-//        // Get an array of targets to hit
-//        for (int i = 0; i < 10 && currentTarget >= 10; i++) {
-//            targets[i] = currentTarget--;
-//        }
+//        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
+//            // Retrieve image data from the DB
+//            SFImage img = _conn.getSFImage(currentTarget);
 //
-//        // Get our batch images
-//        SFImage[] images = _conn.getSFImageBatch(targets);
-//        for (SFImage image : images) {
-//            _imagesFromServer.add(image);
+//            // Consume one item from our current target list
+//            currentTarget--;
+//
+//            // Add the image to the images from server array
+//            _imagesFromServer.add(img);
 //        }
+
+
+
+        // Get our batch images
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int[] targets = new int[10];
+                // Get an array of targets to hit
+                for (int i = 0; i < 10 && _lastItem >= 10; i++) {
+                    targets[i] = _lastItem--;
+                }
+
+                SFImage[] images = _conn.getSFImageBatch(targets);
+                for (SFImage image : images) {
+                    addToImagesFromServer(image);
+                }
+
+                Update u = new Update();
+                u.execute();
+                //u.cancel(true);
+            }
+        });
+        t.start();
 
         // Update last item to remember where we left off
-        _lastItem = currentTarget;
+        _lastItem -= 10;
+    }
+
+    private void addToImagesFromServer(SFImage image) {
+        _imagesFromServer.add(image);
     }
 
     public void getSingleImage() {
         // Retrieve image data from the DB
         SFImage img = _conn.getSFImage(_lastItem);
-        _imagesFromServer.add(img);
+        addToImagesFromServer(img);
 
         // Move last item back down one (consume the image)
         _lastItem--;
@@ -171,19 +186,25 @@ public class SFController {
         // Update our current last DB item
         _lastItem = _conn.retrieveLastDBItemId();
 
+        // Clear current images and update view
+        _imagesFromServer.clear();
+        update();
+
         return result;
     }
 
     public void registerView(SFView view) {
         _views.add(view);
-        update();
+        //update();
+        new Update().execute();
     }
 
     /*
      * Update the views
      */
-    private void update()
+    public void update()
     {
+        System.out.println("in update");
         if (_imagesFromServer.isEmpty()) {
             // TODO: Get as many images as necessary to populate views
             getSingleImage();
@@ -193,4 +214,21 @@ public class SFController {
             v.update();
         }
     }
+
 }
+
+class Update extends AsyncTask {
+
+    @Override
+    protected Object doInBackground(Object[] objects) {
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(Object l) {
+        SFController.getInstance().update();
+        System.out.println("we are here");
+    }
+}
+
+
