@@ -97,13 +97,9 @@ public class SFController {
 
                 Update u = new Update();
                 u.execute();
-                //u.cancel(true);
             }
         });
         t.start();
-
-        // Update last item to remember where we left off
-        _lastItem -= 10;
     }
 
     private void addToImagesFromServer(SFImage image) {
