@@ -264,10 +264,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
         if (currentImageSetSize > currentImageSet.size()) {
             positionFactor = 1;
             tableGallery.removeAllViews();
-            System.out.println("removed");
+        }
+
+        if (currentImageSetSize == currentImageSet.size()){
+            Messages.makeToast(this, "Out of images!");
+            return;
         }
         currentImageSetSize = currentImageSet.size();
-        System.out.println("should really update now");
 
         // Set the main image to the image at the end of the list
         if (currentImageSet.size() > 0)
@@ -281,7 +284,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
             SFController.getInstance().getBatchImages();
         }
 
-        System.out.println(currentImageSet.size());
         // Populate the rest of the images
         System.out.println(positionFactor);
         for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {

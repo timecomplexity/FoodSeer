@@ -4,10 +4,12 @@ package com.blastbeatsandcode.seefood.controller;
 import android.os.AsyncTask;
 
 import com.blastbeatsandcode.seefood.model.SFImage;
+import com.blastbeatsandcode.seefood.utils.Messages;
 import com.blastbeatsandcode.seefood.view.SFView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /*
  * SFController is the controller for the SeeFood app.
@@ -78,7 +80,7 @@ public class SFController {
 //            _imagesFromServer.add(img);
 //        }
 
-
+        System.out.println("last item" + _lastItem);
 
         // Get our batch images
         Thread t = new Thread(new Runnable() {
@@ -92,6 +94,7 @@ public class SFController {
 
                 SFImage[] images = _conn.getSFImageBatch(targets);
                 for (SFImage image : images) {
+                    if (image == null) break;
                     addToImagesFromServer(image);
                 }
 
