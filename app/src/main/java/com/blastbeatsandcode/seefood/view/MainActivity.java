@@ -5,15 +5,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -34,7 +33,6 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SFView {
@@ -50,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static TableLayout tableGallery2;
     private static Button buttonLoadMore;
     private static ProgressBar spinner;
+    private String androidId;
 
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
@@ -74,6 +73,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         tableGallery2 = (TableLayout)findViewById(R.id.tableGallery2);
         buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
         spinner = (ProgressBar)findViewById(R.id.progressBar);
+
+        // Get current device ID
+        androidId = Settings.Secure.getString(getContentResolver(),
+                Settings.Secure.ANDROID_ID);
 
         // Hide the spinner to start with
         spinner.setVisibility(View.GONE);
@@ -131,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
 
         } catch (Exception e) {
-            System.out.println("Could not process image!");
+            Messages.makeToast(this, "Could not process image!");
             System.out.println(e);
         }
     }
@@ -154,7 +157,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
             t.setText("Something went wrong...");
         }
         float percent = (((f/3)*50)+50);
-        System.out.println("percent" + percent);
         s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
     }
 
@@ -231,7 +233,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
     public void uploadImage() {
         Intent intent = new Intent(this, AlbumSelectActivity.class);
         //set limit on number of images that can be selected, default is 10
-        //intent.putExtra(Constants.INTENT_EXTRA_LIMIT, numberOfImagesToSelect);
         startActivityForResult(intent, Constants.REQUEST_CODE);
     }
 
@@ -245,14 +246,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 // Send each image to the AI
                 String path = ((com.darsh.multipleimageselect.models.Image) image).path;
                 File imageFile = new File(path);
-                //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
                 SFController.getInstance().addImageToUpload(imageFile);
 
-                String r = SFController.getInstance().sendImageToAI(path, "alex_test");
-                Messages.makeToast(getApplicationContext(), r);
+                SFController.getInstance().sendImageToAI(path, androidId);
             }
 
-            Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
         } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
             Bitmap image = (Bitmap) data.getExtras().get("data");
             // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
@@ -261,13 +259,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
             // CALL THIS METHOD TO GET THE ACTUAL PATH
             File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
             SFController.getInstance().addImageToUpload(imageFile);
-            Messages.makeToast(getApplicationContext(), "Number of images in list: " + SFController.getInstance().getImagesToUpload().size());
 
             // Send the image to the AI with the absolute path
             String absPath = imageFile.getAbsolutePath();
-            System.out.println("ABSOLUTE PATH: " + absPath);
-            String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
-            Messages.makeToast(getApplicationContext(), r);
+            SFController.getInstance().sendImageToAI(absPath, androidId);
         }
     }
 
