@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static Button buttonLoadMore;
     private static ProgressBar spinner;
     private String androidId;
+    private boolean imageJustUploaded;
 
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
@@ -73,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
         tableGallery2 = (TableLayout)findViewById(R.id.tableGallery2);
         buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
         spinner = (ProgressBar)findViewById(R.id.progressBar);
+
+        imageJustUploaded = false;
 
         // Get current device ID
         androidId = Settings.Secure.getString(getContentResolver(),
@@ -125,11 +128,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
             if (addToLeftTableNext){
                 tableGallery.addView(row);
                 addToLeftTableNext =false;
-                System.out.println("added to left. do it again?"  + addToLeftTableNext);
             } else {
                 tableGallery2.addView(row);
                 addToLeftTableNext =true;
-                System.out.println("added to right. add lefft next? " + addToLeftTableNext);
             }
 
 
@@ -234,6 +235,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         Intent intent = new Intent(this, AlbumSelectActivity.class);
         //set limit on number of images that can be selected, default is 10
         startActivityForResult(intent, Constants.REQUEST_CODE);
+
     }
 
     @Override
@@ -247,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
                 String path = ((com.darsh.multipleimageselect.models.Image) image).path;
                 File imageFile = new File(path);
                 SFController.getInstance().addImageToUpload(imageFile);
-
+                imageJustUploaded = true;
                 SFController.getInstance().sendImageToAI(path, androidId);
             }
 
@@ -262,6 +264,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
             // Send the image to the AI with the absolute path
             String absPath = imageFile.getAbsolutePath();
+            imageJustUploaded = true;
             SFController.getInstance().sendImageToAI(absPath, androidId);
         }
     }
@@ -288,9 +291,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         if (currentImageSetSize > currentImageSet.size()) {
             positionFactor = 1;
             tableGallery.removeAllViews();
+            tableGallery2.removeAllViews();
         }
 
-        if (currentImageSetSize == currentImageSet.size()){
+        if (currentImageSetSize == currentImageSet.size() && !imageJustUploaded){
             Messages.makeToast(this, "Out of images!");
             spinner.setVisibility(View.GONE);
             return;
@@ -313,6 +317,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
             positionFactor += 10;
 
         spinner.setVisibility(View.GONE);
+
+        // Reset our flag for recent image upload
+        imageJustUploaded = false;
     }
 }
 

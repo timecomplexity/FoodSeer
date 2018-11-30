@@ -67,42 +67,26 @@ public class SFController {
 
     // Return the images
     public void getBatchImages() {
-        final int currentTarget = _lastItem;
-
-//        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
-//            // Retrieve image data from the DB
-//            SFImage img = _conn.getSFImage(currentTarget);
-//
-//            // Consume one item from our current target list
-//            currentTarget--;
-//
-//            // Add the image to the images from server array
-//            _imagesFromServer.add(img);
-//        }
-
-        System.out.println("last item" + _lastItem);
-
         // Get our batch images
-        Thread t = new Thread(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
-                int[] targets = new int[10];
-                // Get an array of targets to hit
-                for (int i = 0; i < 10 && _lastItem >= 10; i++) {
-                    targets[i] = _lastItem--;
-                }
-
-                SFImage[] images = _conn.getSFImageBatch(targets);
-                for (SFImage image : images) {
-                    if (image == null) break;
-                    addToImagesFromServer(image);
-                }
-
-                Update u = new Update();
-                u.execute();
+            int[] targets = new int[10];
+            // Get an array of targets to hit
+            for (int i = 0; i < 10 && _lastItem >= 10; i++) {
+                targets[i] = _lastItem--;
             }
-        });
-        t.start();
+
+            SFImage[] images = _conn.getSFImageBatch(targets);
+            for (SFImage image : images) {
+                if (image == null) break;
+                addToImagesFromServer(image);
+            }
+
+            Update u = new Update();
+            u.execute();
+            }
+        }).start();
     }
 
     private void addToImagesFromServer(SFImage image) {
@@ -141,7 +125,6 @@ public class SFController {
     public void addImageToUpload(File image) {
         // Add the image to the list and update the views
         _selectedImages.add(image);
-        update();
     }
 
     /*
