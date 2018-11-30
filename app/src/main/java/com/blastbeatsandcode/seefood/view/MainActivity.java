@@ -10,12 +10,14 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
@@ -98,6 +100,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
             try{
                 ((ImageView) row.findViewById(R.id.galleryImage)).setImageBitmap(image.getImageBitmap());
+
+                // RESIZE IMAGE HERE. Change this if it doesn't play nicely with other resolutions
+                LinearLayout.LayoutParams layoutParams=new LinearLayout.LayoutParams(500, 500);
+                layoutParams.gravity = Gravity.CENTER;
+                ((ImageView) row.findViewById(R.id.galleryImage)).setLayoutParams(layoutParams);
             } catch (Exception e) { //FIXME: it hits this a lot!!! WHYYYYYYYY!!!!!!!!!!!!???????????????
                 System.out.println("IMAGE WAS NULL!!!!!!!!");
                 System.out.println(e);
