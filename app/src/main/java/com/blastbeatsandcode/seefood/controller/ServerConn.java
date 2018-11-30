@@ -64,6 +64,7 @@ public class ServerConn {
         // Create array of DB Getters to run in parallel
         DBGetter[] getters = new DBGetter[currentTarget.length];
         for (int i = 0; i < currentTarget.length; i++) {
+            if (currentTarget[i] == 0) break;
             getters[i] = new DBGetter(false, currentTarget[i]);
             getters[i].execute();
         }
@@ -72,6 +73,7 @@ public class ServerConn {
         SFImage[] images = new SFImage[currentTarget.length];
         for (int i = 0; i < getters.length; i++) {
             try {
+                if (getters[i] == null) break;
                 getters[i].get();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
@@ -253,7 +255,6 @@ class DBGetter extends AsyncTask {
 
     @Override
     protected Object doInBackground(Object[] objects) {
-
         try {
             Class.forName("com.mysql.jdbc.Driver");
             Connection con = DriverManager.getConnection(

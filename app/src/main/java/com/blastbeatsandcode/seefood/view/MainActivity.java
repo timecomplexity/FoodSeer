@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
     private boolean addToLeftTableNext = true;
+    private int currentImageSetSize = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -190,7 +191,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
 
     public void loadMore(){
         SFController.getInstance().getBatchImages();
-        update();
     }
 
     @Override
@@ -273,21 +273,37 @@ public class MainActivity extends AppCompatActivity implements SFView {
     // this method is run on start and after clicking load more
     @Override
     public void update() {
-        ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet(); // set of images downloaded so far
-        if (currentImageSet.size() > 0 )
-            // set last image (most recent image) in this array list as main image and update main values
+
+        // Get our image set
+        ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
+        if (currentImageSetSize > currentImageSet.size()) {
+            positionFactor = 1;
+            tableGallery.removeAllViews();
+        }
+
+        if (currentImageSetSize == currentImageSet.size()){
+            Messages.makeToast(this, "Out of images!");
+            return;
+        }
+        currentImageSetSize = currentImageSet.size();
+
+        // Set the main image to the image at the end of the list
+        if (currentImageSet.size() > 0)
             imageMainResult.setImageBitmap(currentImageSet.get(0).getImageBitmap());
             appropriateView(currentImageSet.get(0).getFoodConfidence(), currentImageSet.get(0).getNotFoodConfidence(), seekbarMainResult, textMainResult);
 
 
         // Populate the rest of the images
+        System.out.println(positionFactor);
         for (int currentPos = 1 + positionFactor; currentPos < currentImageSet.size(); currentPos++) {
             populateGallery(currentImageSet.get(currentPos));
+
         }
 
         // Move past the first 10 items in list
         if (currentImageSet.size() != 1)
             positionFactor += 10;
-
     }
 }
+
+
