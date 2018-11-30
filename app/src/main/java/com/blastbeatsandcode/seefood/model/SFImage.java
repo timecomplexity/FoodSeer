@@ -28,30 +28,12 @@ public class SFImage {
         _imagePath = imagePath;
         _fileType = fileType;
         _bitmap = bitmap;
+        if (bitmap == null){
+            System.out.println("WHY IS THIS NULL?????????????????????????????????????????????????????????????????????????????????????");
+        }
     }
 
-    // Constructor for before having the actual image
-    public SFImage (float foodConfidence, float notFoodConfidence, String sender,
-                    String fileType, String imagePath)
-    {
-        this._foodConfidence = foodConfidence;
-        this._notFoodConfidence = notFoodConfidence;
-        this._sender = sender;
-        _imagePath = imagePath;
-        _fileType = fileType;
-    }
 
-    // Constructor for SFImage with all of the components
-    SFImage (Image image, float foodConfidence, float notFoodConfidence, String sender,
-             String fileType, String imagePath)
-    {
-        this._image = image;
-        this._foodConfidence = foodConfidence;
-        this._notFoodConfidence = notFoodConfidence;
-        this._sender = sender;
-        _imagePath = imagePath;
-        _fileType = fileType;
-    }
 
 
     // Constructor for SFImage with only image given
