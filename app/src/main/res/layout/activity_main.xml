@@ -73,13 +73,15 @@
 
                     <TableLayout
                         android:id="@+id/tableGallery"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:stretchColumns="0"
                         android:layout_weight="1">
 
                         <TableRow
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent">
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_horizontal">
 
                         </TableRow>
 
@@ -87,13 +89,15 @@
 
                     <TableLayout
                         android:id="@+id/tableGallery2"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:stretchColumns="0"
                         android:layout_weight="1">
 
                         <TableRow
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent">
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_horizontal">
 
                         </TableRow>
 
@@ -141,5 +145,13 @@
             app:srcCompat="@android:drawable/ic_menu_camera" />
 
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true" />
+
 
 </android.support.constraint.ConstraintLayout>
