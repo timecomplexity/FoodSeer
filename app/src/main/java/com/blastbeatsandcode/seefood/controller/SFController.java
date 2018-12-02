@@ -168,11 +168,13 @@ public class SFController {
         // Update our current last DB item
         _lastItem = _conn.retrieveLastDBItemId();
 
+        return result;
+    }
+
+    public void clearAndUpdate() {
         // Clear current images and update view
         _imagesFromServer.clear();
         update();
-
-        return result;
     }
 
     public void registerView(SFView view) {

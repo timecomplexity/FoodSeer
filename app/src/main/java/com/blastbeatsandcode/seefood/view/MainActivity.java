@@ -234,7 +234,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
         Intent intent = new Intent(this, AlbumSelectActivity.class);
         //set limit on number of images that can be selected, default is 10
         startActivityForResult(intent, Constants.REQUEST_CODE);
-
     }
 
     @Override
@@ -266,6 +265,9 @@ public class MainActivity extends AppCompatActivity implements SFView {
             imageJustUploaded = true;
             SFController.getInstance().sendImageToAI(absPath, androidId);
         }
+
+        // Reset the views when done
+        SFController.getInstance().clearAndUpdate();
     }
 
     @Override
@@ -287,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // Get our image set
         ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         if (currentImageSetSize > currentImageSet.size()) {
-            positionFactor = 1;
+            positionFactor = 0;
             tableGallery.removeAllViews();
             tableGallery2.removeAllViews();
         }
