@@ -234,6 +234,7 @@ public class MainActivity extends AppCompatActivity implements SFView {
         Intent intent = new Intent(this, AlbumSelectActivity.class);
         //set limit on number of images that can be selected, default is 10
         startActivityForResult(intent, Constants.REQUEST_CODE);
+        spinner.setVisibility(View.VISIBLE);
     }
 
     @Override
