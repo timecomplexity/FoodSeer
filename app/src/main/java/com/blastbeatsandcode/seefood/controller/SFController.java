@@ -177,7 +177,6 @@ public class SFController {
 
     public void registerView(SFView view) {
         _views.add(view);
-        //update();
         new Update().execute();
     }
 
@@ -186,10 +185,10 @@ public class SFController {
      */
     public void update()
     {
-        System.out.println("in update");
         if (_imagesFromServer.isEmpty()) {
             // TODO: Get as many images as necessary to populate views
             getSingleImage();
+            getBatchImages();
         }
         for(SFView v : _views)
         {
@@ -209,7 +208,6 @@ class Update extends AsyncTask {
     @Override
     protected void onPostExecute(Object l) {
         SFController.getInstance().update();
-        System.out.println("we are here");
     }
 }
 

@@ -78,11 +78,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         imageJustUploaded = false;
 
         // Get current device ID
-        androidId = Settings.Secure.getString(getContentResolver(),
-                Settings.Secure.ANDROID_ID);
+        androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
         // Hide the spinner to start with
-        spinner.setVisibility(View.GONE);
+        spinner.setVisibility(View.VISIBLE);
 
         // start all listeners
 
@@ -285,7 +284,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
     // this method is run on start and after clicking load more
     @Override
     public void update() {
-        spinner.setVisibility(View.VISIBLE);
         // Get our image set
         ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         if (currentImageSetSize > currentImageSet.size()) {
@@ -312,11 +310,11 @@ public class MainActivity extends AppCompatActivity implements SFView {
             populateGallery(currentImageSet.get(currentPos));
         }
 
-        // Move past the first 10 items in list
-        if (currentImageSet.size() != 1)
+        // Move past the first 10 items in list and keep up the spinner
+        if (currentImageSet.size() != 1) {
             positionFactor += 10;
-
-        spinner.setVisibility(View.GONE);
+            spinner.setVisibility(View.GONE);
+        }
 
         // Reset our flag for recent image upload
         imageJustUploaded = false;
