@@ -1,10 +1,13 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
@@ -34,6 +37,8 @@ import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
 import java.util.ArrayList;
+
+import static android.app.Activity.RESULT_OK;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
@@ -232,43 +237,45 @@ public class MainActivity extends AppCompatActivity implements SFView {
     @Override
     public void uploadImage() {
         Intent intent = new Intent(this, AlbumSelectActivity.class);
-        //set limit on number of images that can be selected, default is 10
         startActivityForResult(intent, Constants.REQUEST_CODE);
         spinner.setVisibility(View.VISIBLE);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // Handle what to do after images have been selected from the gallery
-        if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            //The array list has the image paths of the selected images
-            ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
-            for (Object image : images) {
-                // Send each image to the AI
-                String path = ((com.darsh.multipleimageselect.models.Image) image).path;
-                File imageFile = new File(path);
-                SFController.getInstance().addImageToUpload(imageFile);
-                imageJustUploaded = true;
-                SFController.getInstance().sendImageToAI(path, androidId);
-            }
-
-        } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
-            Bitmap image = (Bitmap) data.getExtras().get("data");
-            // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-            Uri tempUri = FileUtils.getImageUri(getApplicationContext(), image);
-
-            // CALL THIS METHOD TO GET THE ACTUAL PATH
-            File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
-            SFController.getInstance().addImageToUpload(imageFile);
-
-            // Send the image to the AI with the absolute path
-            String absPath = imageFile.getAbsolutePath();
-            imageJustUploaded = true;
-            SFController.getInstance().sendImageToAI(absPath, androidId);
-        }
-
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         // Reset the views when done
-        SFController.getInstance().clearAndUpdate();
+        imageJustUploaded = true;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // Handle what to do after images have been selected from the gallery
+                if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+                    //The array list has the image paths of the selected images
+                    ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
+                    for (Object image : images) {
+                        // Send each image to the AI
+                        String path = ((com.darsh.multipleimageselect.models.Image) image).path;
+                        SFController.getInstance().sendImageToAI(path, androidId);
+                    }
+
+                } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
+                    Bitmap image = (Bitmap) data.getExtras().get("data");
+                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+                    Uri tempUri = FileUtils.getImageUri(getApplicationContext(), image);
+
+                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+                    File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
+
+                    // Send the image to the AI with the absolute path
+                    String absPath = imageFile.getAbsolutePath();
+                    SFController.getInstance().sendImageToAI(absPath, androidId);
+                }
+
+                // Reset the views when done
+                new NewImageUpdater().execute();
+            }
+        }).start();
     }
 
     @Override
@@ -324,4 +331,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
     }
 }
 
+class NewImageUpdater extends AsyncTask {
+    @Override
+    protected Object doInBackground(Object[] objects) { return null; }
 
+    @Override
+    protected void onPostExecute(Object l) {
+        SFController.getInstance().clearAndUpdate();
+    }
+}

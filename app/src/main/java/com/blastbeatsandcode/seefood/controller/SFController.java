@@ -119,22 +119,6 @@ public class SFController {
         return _imagesFromServer;
     }
 
-    /*
-     * Add image to the list to upload
-     */
-    public void addImageToUpload(File image) {
-        // Add the image to the list and update the views
-        _selectedImages.add(image);
-    }
-
-    /*
-     * Retrieve images in list to be uploaded
-     */
-    public ArrayList<File> getImagesToUpload() {
-        return _selectedImages;
-    }
-
-
     /**
      * Send image to AI for processing
      * @param imagePath Path to image file
@@ -188,12 +172,11 @@ public class SFController {
     public void update()
     {
         if (_imagesFromServer.isEmpty()) {
-            // TODO: Get as many images as necessary to populate views
             getSingleImage();
             getBatchImages();
         }
-        for(SFView v : _views)
-        {
+
+        for(SFView v : _views) {
             v.update();
         }
     }
@@ -201,7 +184,6 @@ public class SFController {
 }
 
 class Update extends AsyncTask {
-
     @Override
     protected Object doInBackground(Object[] objects) {
         return null;
@@ -212,5 +194,3 @@ class Update extends AsyncTask {
         SFController.getInstance().update();
     }
 }
-
-
