@@ -259,6 +259,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
                         SFController.getInstance().sendImageToAI(path, androidId);
                     }
 
+                    // Reset the views when done
+                    new NewImageUpdater().execute();
                 } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
                     Bitmap image = (Bitmap) data.getExtras().get("data");
                     // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
@@ -270,10 +272,12 @@ public class MainActivity extends AppCompatActivity implements SFView {
                     // Send the image to the AI with the absolute path
                     String absPath = imageFile.getAbsolutePath();
                     SFController.getInstance().sendImageToAI(absPath, androidId);
-                }
 
-                // Reset the views when done
-                new NewImageUpdater().execute();
+                    // Reset the views when done
+                    new NewImageUpdater().execute();
+                } else {
+                    new NewImageUpdater(true).execute();
+                }
             }
         }).start();
     }
@@ -288,8 +292,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // Start the activity for taking a picture
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, SFConstants.TAKE_PICTURE_REQUEST_CODE);
+        spinner.setVisibility(View.VISIBLE);
     }
 
+    public static void hideSpinner() { spinner.setVisibility(View.GONE); }
 
     // this method is run on start and after clicking load more
     @Override
@@ -332,11 +338,21 @@ public class MainActivity extends AppCompatActivity implements SFView {
 }
 
 class NewImageUpdater extends AsyncTask {
+    private boolean hideSpinner;
+
+    NewImageUpdater() {}
+    NewImageUpdater(boolean hideSpinner) { this.hideSpinner = hideSpinner; }
+
     @Override
     protected Object doInBackground(Object[] objects) { return null; }
 
     @Override
     protected void onPostExecute(Object l) {
+        // This bit is kind of stupid, but I don't know a better way to hide it
+        if (hideSpinner) {
+            MainActivity.hideSpinner();
+            return;
+        }
         SFController.getInstance().clearAndUpdate();
     }
 }
