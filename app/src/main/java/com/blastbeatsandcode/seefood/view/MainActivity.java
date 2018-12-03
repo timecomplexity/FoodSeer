@@ -1,5 +1,7 @@
 package com.blastbeatsandcode.seefood.view;
 
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,12 +10,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -34,8 +36,9 @@ import com.darsh.multipleimageselect.activities.AlbumSelectActivity;
 import com.darsh.multipleimageselect.helpers.Constants;
 
 import java.io.File;
-import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
+
+import static android.app.Activity.RESULT_OK;
 
 public class MainActivity extends AppCompatActivity implements SFView {
 
@@ -50,6 +53,8 @@ public class MainActivity extends AppCompatActivity implements SFView {
     private static TableLayout tableGallery2;
     private static Button buttonLoadMore;
     private static ProgressBar spinner;
+    private String androidId;
+    private boolean imageJustUploaded;
 
     // To track which images we've loaded into the app...
     private int positionFactor = 0;
@@ -75,8 +80,13 @@ public class MainActivity extends AppCompatActivity implements SFView {
         buttonLoadMore = (Button)findViewById(R.id.buttonLoadMore);
         spinner = (ProgressBar)findViewById(R.id.progressBar);
 
+        imageJustUploaded = false;
+
+        // Get current device ID
+        androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+
         // Hide the spinner to start with
-        spinner.setVisibility(View.GONE);
+        spinner.setVisibility(View.VISIBLE);
 
         // start all listeners
 
@@ -122,16 +132,14 @@ public class MainActivity extends AppCompatActivity implements SFView {
             if (addToLeftTableNext){
                 tableGallery.addView(row);
                 addToLeftTableNext =false;
-                System.out.println("added to left. do it again?"  + addToLeftTableNext);
             } else {
                 tableGallery2.addView(row);
                 addToLeftTableNext =true;
-                System.out.println("added to right. add lefft next? " + addToLeftTableNext);
             }
 
 
         } catch (Exception e) {
-            System.out.println("Could not process image!");
+            Messages.makeToast(this, "Could not process image!");
             System.out.println(e);
         }
     }
@@ -154,7 +162,6 @@ public class MainActivity extends AppCompatActivity implements SFView {
             t.setText("Something went wrong...");
         }
         float percent = (((f/3)*50)+50);
-        System.out.println("percent" + percent);
         s.setProgress(Math.round(percent)); // progress can be between -50 and 50 to fit 100 units
     }
 
@@ -230,45 +237,49 @@ public class MainActivity extends AppCompatActivity implements SFView {
     @Override
     public void uploadImage() {
         Intent intent = new Intent(this, AlbumSelectActivity.class);
-        //set limit on number of images that can be selected, default is 10
-        //intent.putExtra(Constants.INTENT_EXTRA_LIMIT, numberOfImagesToSelect);
         startActivityForResult(intent, Constants.REQUEST_CODE);
+        spinner.setVisibility(View.VISIBLE);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // Handle what to do after images have been selected from the gallery
-        if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            //The array list has the image paths of the selected images
-            ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
-            for (Object image : images) {
-                // Send each image to the AI
-                String path = ((com.darsh.multipleimageselect.models.Image) image).path;
-                File imageFile = new File(path);
-                //Messages.makeToast(getApplicationContext(), "IMAGE FILE PATH: " + path);
-                SFController.getInstance().addImageToUpload(imageFile);
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        // Reset the views when done
+        imageJustUploaded = true;
 
-                String r = SFController.getInstance().sendImageToAI(path, "alex_test");
-                Messages.makeToast(getApplicationContext(), r);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // Handle what to do after images have been selected from the gallery
+                if (requestCode == Constants.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+                    //The array list has the image paths of the selected images
+                    ArrayList images = data.getParcelableArrayListExtra(Constants.INTENT_EXTRA_IMAGES);
+                    for (Object image : images) {
+                        // Send each image to the AI
+                        String path = ((com.darsh.multipleimageselect.models.Image) image).path;
+                        SFController.getInstance().sendImageToAI(path, androidId);
+                    }
+
+                    // Reset the views when done
+                    new NewImageUpdater().execute();
+                } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
+                    Bitmap image = (Bitmap) data.getExtras().get("data");
+                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+                    Uri tempUri = FileUtils.getImageUri(getApplicationContext(), image);
+
+                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+                    File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
+
+                    // Send the image to the AI with the absolute path
+                    String absPath = imageFile.getAbsolutePath();
+                    SFController.getInstance().sendImageToAI(absPath, androidId);
+
+                    // Reset the views when done
+                    new NewImageUpdater().execute();
+                } else {
+                    new NewImageUpdater(true).execute();
+                }
             }
-
-            Messages.makeToast(getApplicationContext(), "Number of images in the list: " + SFController.getInstance().getImagesToUpload().size());
-        } else if (requestCode == SFConstants.TAKE_PICTURE_REQUEST_CODE && resultCode == RESULT_OK && data!= null) {
-            Bitmap image = (Bitmap) data.getExtras().get("data");
-            // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
-            Uri tempUri = FileUtils.getImageUri(getApplicationContext(), image);
-
-            // CALL THIS METHOD TO GET THE ACTUAL PATH
-            File imageFile = new File(FileUtils.getRealPathFromURI(getContentResolver(), tempUri));
-            SFController.getInstance().addImageToUpload(imageFile);
-            Messages.makeToast(getApplicationContext(), "Number of images in list: " + SFController.getInstance().getImagesToUpload().size());
-
-            // Send the image to the AI with the absolute path
-            String absPath = imageFile.getAbsolutePath();
-            System.out.println("ABSOLUTE PATH: " + absPath);
-            String r = SFController.getInstance().sendImageToAI(absPath, "alex_test");
-            Messages.makeToast(getApplicationContext(), r);
-        }
+        }).start();
     }
 
     @Override
@@ -281,21 +292,23 @@ public class MainActivity extends AppCompatActivity implements SFView {
         // Start the activity for taking a picture
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, SFConstants.TAKE_PICTURE_REQUEST_CODE);
+        spinner.setVisibility(View.VISIBLE);
     }
 
+    public static void hideSpinner() { spinner.setVisibility(View.GONE); }
 
     // this method is run on start and after clicking load more
     @Override
     public void update() {
-        spinner.setVisibility(View.VISIBLE);
         // Get our image set
         ArrayList<SFImage> currentImageSet = SFController.getInstance().getCurrentImageSet();
         if (currentImageSetSize > currentImageSet.size()) {
-            positionFactor = 1;
+            positionFactor = 0;
             tableGallery.removeAllViews();
+            tableGallery2.removeAllViews();
         }
 
-        if (currentImageSetSize == currentImageSet.size()){
+        if (currentImageSetSize == currentImageSet.size() && !imageJustUploaded){
             Messages.makeToast(this, "Out of images!");
             spinner.setVisibility(View.GONE);
             return;
@@ -313,12 +326,33 @@ public class MainActivity extends AppCompatActivity implements SFView {
             populateGallery(currentImageSet.get(currentPos));
         }
 
-        // Move past the first 10 items in list
-        if (currentImageSet.size() != 1)
+        // Move past the first 10 items in list and keep up the spinner
+        if (currentImageSet.size() != 1) {
             positionFactor += 10;
+            spinner.setVisibility(View.GONE);
+        }
 
-        spinner.setVisibility(View.GONE);
+        // Reset our flag for recent image upload
+        imageJustUploaded = false;
     }
 }
 
+class NewImageUpdater extends AsyncTask {
+    private boolean hideSpinner;
 
+    NewImageUpdater() {}
+    NewImageUpdater(boolean hideSpinner) { this.hideSpinner = hideSpinner; }
+
+    @Override
+    protected Object doInBackground(Object[] objects) { return null; }
+
+    @Override
+    protected void onPostExecute(Object l) {
+        // This bit is kind of stupid, but I don't know a better way to hide it
+        if (hideSpinner) {
+            MainActivity.hideSpinner();
+            return;
+        }
+        SFController.getInstance().clearAndUpdate();
+    }
+}

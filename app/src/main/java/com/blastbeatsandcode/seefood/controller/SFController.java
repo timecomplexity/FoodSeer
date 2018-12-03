@@ -67,42 +67,26 @@ public class SFController {
 
     // Return the images
     public void getBatchImages() {
-        final int currentTarget = _lastItem;
-
-//        for (int i = currentTarget; i > _lastItem - 10 && currentTarget >= 10; i--) {
-//            // Retrieve image data from the DB
-//            SFImage img = _conn.getSFImage(currentTarget);
-//
-//            // Consume one item from our current target list
-//            currentTarget--;
-//
-//            // Add the image to the images from server array
-//            _imagesFromServer.add(img);
-//        }
-
-        System.out.println("last item" + _lastItem);
-
         // Get our batch images
-        Thread t = new Thread(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
-                int[] targets = new int[10];
-                // Get an array of targets to hit
-                for (int i = 0; i < 10 && _lastItem >= 10; i++) {
-                    targets[i] = _lastItem--;
-                }
-
-                SFImage[] images = _conn.getSFImageBatch(targets);
-                for (SFImage image : images) {
-                    if (image == null) break;
-                    addToImagesFromServer(image);
-                }
-
-                Update u = new Update();
-                u.execute();
+            int[] targets = new int[10];
+            // Get an array of targets to hit
+            for (int i = 0; i < 10 && _lastItem >= 10; i++) {
+                targets[i] = _lastItem--;
             }
-        });
-        t.start();
+
+            SFImage[] images = _conn.getSFImageBatch(targets);
+            for (SFImage image : images) {
+                if (image == null) break;
+                addToImagesFromServer(image);
+            }
+
+            Update u = new Update();
+            u.execute();
+            }
+        }).start();
     }
 
     private void addToImagesFromServer(SFImage image) {
@@ -134,23 +118,6 @@ public class SFController {
     public ArrayList<SFImage> getCurrentImageSet() {
         return _imagesFromServer;
     }
-
-    /*
-     * Add image to the list to upload
-     */
-    public void addImageToUpload(File image) {
-        // Add the image to the list and update the views
-        _selectedImages.add(image);
-        update();
-    }
-
-    /*
-     * Retrieve images in list to be uploaded
-     */
-    public ArrayList<File> getImagesToUpload() {
-        return _selectedImages;
-    }
-
 
     /**
      * Send image to AI for processing
@@ -185,16 +152,17 @@ public class SFController {
         // Update our current last DB item
         _lastItem = _conn.retrieveLastDBItemId();
 
+        return result;
+    }
+
+    public void clearAndUpdate() {
         // Clear current images and update view
         _imagesFromServer.clear();
         update();
-
-        return result;
     }
 
     public void registerView(SFView view) {
         _views.add(view);
-        //update();
         new Update().execute();
     }
 
@@ -203,13 +171,12 @@ public class SFController {
      */
     public void update()
     {
-        System.out.println("in update");
         if (_imagesFromServer.isEmpty()) {
-            // TODO: Get as many images as necessary to populate views
             getSingleImage();
+            getBatchImages();
         }
-        for(SFView v : _views)
-        {
+
+        for(SFView v : _views) {
             v.update();
         }
     }
@@ -217,7 +184,6 @@ public class SFController {
 }
 
 class Update extends AsyncTask {
-
     @Override
     protected Object doInBackground(Object[] objects) {
         return null;
@@ -226,8 +192,5 @@ class Update extends AsyncTask {
     @Override
     protected void onPostExecute(Object l) {
         SFController.getInstance().update();
-        System.out.println("we are here");
     }
 }
-
-
