@@ -220,10 +220,10 @@ public class MainActivity extends AppCompatActivity implements SFView {
         " the camera or the upload button.\nNext, take a picture or select a picture to upload. Your"+
         " image will be processed by an AI and tested for how likely it is to be food! When the processing"+
         " is finished, your latest image will appear and show how \"food\" it is! To see previously uploaded "+
-        " images, just scroll down.\n\nHappy SeeFooding!";
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        " images, just scroll down.\n\nYou will be seeing food in your future!";
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.Theme_AppCompat_DayNight_Dialog);
         builder.setCancelable(true); //allow user to close popup
-        builder.setTitle("Welcome to SeeFood!");
+        builder.setTitle("Welcome to FoodSeer!");
         builder.setMessage(helpText);
         builder.setNegativeButton("Great!", new DialogInterface.OnClickListener() {
             @Override
